@@ -21,6 +21,10 @@ export async function GET() {
 
     // Test basic database operations
     const db = connection.connection.db;
+    if (!db) {
+      throw new Error("Database connection failed - db is undefined");
+    }
+
     console.log("Simple test: Database name:", db.databaseName);
 
     // Test a simple query
