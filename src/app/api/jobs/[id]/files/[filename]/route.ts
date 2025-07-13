@@ -33,6 +33,22 @@ export async function GET(
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
+    // Check if we're in a serverless environment (Vercel)
+    const isServerless = process.env.VERCEL === "1";
+
+    if (isServerless) {
+      // In serverless, we can't read files from filesystem
+      return NextResponse.json(
+        {
+          error: "File download not available in production",
+          message:
+            "Files are stored as metadata only. Please implement cloud storage for full file functionality.",
+        },
+        { status: 503 }
+      );
+    }
+
+    // Local development - read file from filesystem
     const filepath = join(process.cwd(), "public", "uploads", id, filename);
     const fileBuffer = await readFile(filepath);
 
