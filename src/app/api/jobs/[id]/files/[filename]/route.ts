@@ -28,7 +28,7 @@ export async function GET(
       );
     }
 
-    const document = job.documents?.find((doc: any) => doc.filename === filename);
+    const document = job.documents?.find((doc: { filename: string; mimeType: string; originalName: string }) => doc.filename === filename);
     if (!document) {
       return NextResponse.json(
         { error: 'File not found' },

@@ -1,43 +1,37 @@
-import React, { useState } from 'react';
-import { Task } from './TaskForm';
-import { TaskList } from './TaskList';
-import { TaskModal } from './TaskModal';
-import { ITask } from '../models/Task';
+import React, { useState } from "react";
+import { Task } from "./TaskForm";
+import { TaskList } from "./TaskList";
+import { TaskModal } from "./TaskModal";
+import { ITask } from "../models/Task";
 
 interface TasksPageProps {
   tasks: ITask[];
   onAddTask: (task: Task) => Promise<ITask>;
   onDeleteTask: (taskId: string) => void;
   onUpdateTask: (taskId: string, task: Task) => void;
-  onTaskUpdated?: (task: ITask) => void;
-  projectManagers: string[];
-  jobs: any[];
 }
 
-export const TasksPage: React.FC<TasksPageProps> = ({ 
-  tasks, 
-  onAddTask, 
-  onDeleteTask, 
-  onUpdateTask, 
-  onTaskUpdated,
-  projectManagers, 
-  jobs 
+export const TasksPage: React.FC<TasksPageProps> = ({
+  tasks,
+  onAddTask,
+  onDeleteTask,
+  onUpdateTask,
 }) => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleEditTask = (taskId: string) => {
-    const task = tasks.find(t => t._id === taskId);
+    const task = tasks.find((t) => t._id === taskId);
     if (task) {
       // Convert ITask to Task interface
       const taskForEdit: Task = {
         title: task.title,
-        description: task.description || '',
-        dueDate: new Date(task.dueDate),
+        description: task.description || "",
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
         priority: task.priority,
         status: task.status,
-        assignedTo: task.assignedTo || '',
+        assignedTo: task.assignedTo || "",
       };
       setEditingTask(taskForEdit);
       setEditingTaskId(taskId);
@@ -76,7 +70,7 @@ export const TasksPage: React.FC<TasksPageProps> = ({
         <h2 className="text-2xl font-bold text-gray-900 mb-2">Manage Tasks</h2>
         <p className="text-gray-600">Add new tasks and manage existing ones</p>
       </div>
-      
+
       <div className="mb-6">
         <button
           onClick={handleOpenAddModal}
@@ -85,14 +79,13 @@ export const TasksPage: React.FC<TasksPageProps> = ({
           + Add New Task
         </button>
       </div>
-      
+
       <div>
         <h3 className="text-xl font-bold text-gray-900 mb-4">Task List</h3>
-        <TaskList 
-          tasks={tasks} 
+        <TaskList
+          tasks={tasks}
           onDeleteTask={onDeleteTask}
           onEditTask={handleEditTask}
-          jobs={jobs}
         />
       </div>
 
@@ -101,14 +94,10 @@ export const TasksPage: React.FC<TasksPageProps> = ({
         onClose={handleCloseModal}
         isEditing={!!editingTask}
         editingTask={editingTask}
-        editingTaskId={editingTaskId}
         onAddTask={onAddTask}
         onUpdateTask={handleUpdateTask}
         onCancelEdit={handleCancelEdit}
-        projectManagers={projectManagers}
-        jobs={jobs}
-        onTaskUpdated={onTaskUpdated}
       />
     </div>
   );
-}; 
+};

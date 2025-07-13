@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Job } from './JobForm';
 import { IJob } from '../models/Job';
 
 interface StatsPageProps {

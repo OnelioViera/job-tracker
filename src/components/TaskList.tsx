@@ -1,30 +1,37 @@
-import React, { useState } from 'react';
-import { ConfirmDialog } from './ConfirmDialog';
-import { ITask } from '../models/Task';
+import React, { useState } from "react";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { ITask } from "../models/Task";
 
 interface TaskListProps {
   tasks: ITask[];
   onDeleteTask: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
-  jobs: any[];
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditTask, jobs }) => {
-  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; taskId: string | null; taskTitle: string }>({
+export const TaskList: React.FC<TaskListProps> = ({
+  tasks,
+  onDeleteTask,
+  onEditTask,
+}) => {
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    taskId: string | null;
+    taskTitle: string;
+  }>({
     isOpen: false,
     taskId: null,
-    taskTitle: ''
+    taskTitle: "",
   });
 
-  const pendingTasks = tasks.filter(task => task.status === 'Pending');
-  const inProgressTasks = tasks.filter(task => task.status === 'In Progress');
-  const completedTasks = tasks.filter(task => task.status === 'Completed');
+  const pendingTasks = tasks.filter((task) => task.status === "Pending");
+  const inProgressTasks = tasks.filter((task) => task.status === "In Progress");
+  const completedTasks = tasks.filter((task) => task.status === "Completed");
 
   const handleDeleteClick = (taskId: string, taskTitle: string) => {
     setDeleteConfirm({
       isOpen: true,
       taskId: taskId,
-      taskTitle: taskTitle
+      taskTitle: taskTitle,
     });
   };
 
@@ -38,29 +45,41 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditT
     setDeleteConfirm({
       isOpen: false,
       taskId: null,
-      taskTitle: ''
+      taskTitle: "",
     });
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'High': return 'text-red-700';
-      case 'Medium': return 'text-yellow-800';
-      case 'Low': return 'text-green-800';
-      default: return 'text-gray-700';
+      case "High":
+        return "text-red-700";
+      case "Medium":
+        return "text-yellow-800";
+      case "Low":
+        return "text-green-800";
+      default:
+        return "text-gray-700";
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Pending': return 'text-yellow-700';
-      case 'In Progress': return 'text-blue-700';
-      case 'Completed': return 'text-green-700';
-      default: return 'text-gray-700';
+      case "Pending":
+        return "text-yellow-700";
+      case "In Progress":
+        return "text-blue-700";
+      case "Completed":
+        return "text-green-700";
+      default:
+        return "text-gray-700";
     }
   };
 
-  const renderTaskTable = (taskList: ITask[], title: string, isCompleted: boolean = false) => {
+  const renderTaskTable = (
+    taskList: ITask[],
+    title: string,
+    isCompleted: boolean = false
+  ) => {
     if (taskList.length === 0) {
       return null;
     }
@@ -83,11 +102,17 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditT
             </thead>
             <tbody>
               {taskList.map((task) => (
-                <tr key={task._id} className={`even:bg-gray-50 ${isCompleted ? 'opacity-75' : ''}`}>
+                <tr
+                  key={task._id}
+                  className={`even:bg-gray-50 ${isCompleted ? "opacity-75" : ""}`}
+                >
                   <td className="border px-2 py-1 font-medium">{task.title}</td>
                   <td className="border px-2 py-1">
                     {task.description ? (
-                      <div className="max-w-xs truncate" title={task.description}>
+                      <div
+                        className="max-w-xs truncate"
+                        title={task.description}
+                      >
                         {task.description}
                       </div>
                     ) : (
@@ -95,7 +120,9 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditT
                     )}
                   </td>
                   <td className="border px-2 py-1">
-                    {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : 'No due date'}
+                    {task.dueDate
+                      ? new Date(task.dueDate).toLocaleDateString()
+                      : "No due date"}
                   </td>
                   <td className="border px-2 py-1 font-bold">
                     <span className={getPriorityColor(task.priority)}>
@@ -108,7 +135,7 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditT
                     </span>
                   </td>
                   <td className="border px-2 py-1">
-                    {task.assignedTo || 'Unassigned'}
+                    {task.assignedTo || "Unassigned"}
                   </td>
                   <td className="border px-2 py-1 text-center">
                     <div className="flex gap-2 justify-center">
@@ -143,10 +170,10 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditT
 
   return (
     <div className="mt-8 w-full max-w-6xl">
-      {renderTaskTable(pendingTasks, 'Pending Tasks')}
-      {renderTaskTable(inProgressTasks, 'In Progress Tasks')}
-      {renderTaskTable(completedTasks, 'Completed Tasks', true)}
-      
+      {renderTaskTable(pendingTasks, "Pending Tasks")}
+      {renderTaskTable(inProgressTasks, "In Progress Tasks")}
+      {renderTaskTable(completedTasks, "Completed Tasks", true)}
+
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
         onClose={handleCloseConfirm}
@@ -158,4 +185,4 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditT
       />
     </div>
   );
-}; 
+};
