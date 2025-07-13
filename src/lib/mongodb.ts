@@ -17,7 +17,15 @@ async function dbConnect() {
   }
 
   try {
-    cached = await mongoose.connect(MONGODB_URI!);
+    const connectionOptions = {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      bufferCommands: false,
+      bufferMaxEntries: 0,
+    };
+
+    cached = await mongoose.connect(MONGODB_URI!, connectionOptions);
     console.log("MongoDB connected successfully");
     return cached;
   } catch (error) {
