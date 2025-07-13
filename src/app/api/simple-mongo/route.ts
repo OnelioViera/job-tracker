@@ -22,6 +22,9 @@ export async function GET() {
     console.log("Simple Mongo: Connection successful");
 
     // Test basic ping
+    if (!mongoose.connection.db) {
+      throw new Error("Database connection not established");
+    }
     const adminDb = mongoose.connection.db.admin();
     const result = await adminDb.ping();
 
