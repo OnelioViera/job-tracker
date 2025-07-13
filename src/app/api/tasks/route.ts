@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb";
 import Task from "@/models/Task";
 
@@ -7,6 +8,8 @@ export async function GET() {
     console.log("API: Starting GET /api/tasks");
     console.log("API: MONGODB_URI exists:", !!process.env.MONGODB_URI);
 
+    // Force a fresh connection
+    await mongoose.disconnect();
     await dbConnect();
     console.log("API: Database connected successfully");
 
@@ -29,6 +32,8 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     console.log("API: Received POST request for task");
+    // Force a fresh connection
+    await mongoose.disconnect();
     await dbConnect();
     const body = await request.json();
     console.log("API: Request body:", JSON.stringify(body, null, 2));
