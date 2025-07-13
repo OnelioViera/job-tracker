@@ -17,7 +17,7 @@ async function dbConnect() {
   }
 
   try {
-    cached = await mongoose.connect(MONGODB_URI);
+    cached = await mongoose.connect(MONGODB_URI!);
     console.log("MongoDB connected successfully");
     return cached;
   } catch (error) {
