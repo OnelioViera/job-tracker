@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import { join } from "path";
-import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb";
 import Job from "@/models/Job";
 
@@ -11,8 +10,6 @@ export async function GET(
 ) {
   try {
     const { id, filename } = await params;
-    // Force a fresh connection
-    await mongoose.disconnect();
     await dbConnect();
 
     // Validate that the ID is a valid MongoDB ObjectId

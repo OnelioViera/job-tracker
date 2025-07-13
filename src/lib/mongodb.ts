@@ -12,8 +12,15 @@ if (!MONGODB_URI) {
 let cached: typeof mongoose | null = null;
 
 async function dbConnect() {
-  if (cached) {
+  // If we have a cached connection and it's ready, return it
+  if (cached && mongoose.connection.readyState === 1) {
     return cached;
+  }
+
+  // If there's a connection but it's not ready, disconnect it
+  if (cached && mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+    cached = null;
   }
 
   try {
@@ -22,7 +29,6 @@ async function dbConnect() {
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
       bufferCommands: false,
-      bufferMaxEntries: 0,
     };
 
     cached = await mongoose.connect(MONGODB_URI!, connectionOptions);

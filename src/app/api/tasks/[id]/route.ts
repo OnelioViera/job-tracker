@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb";
 import Task from "@/models/Task";
 
@@ -9,8 +8,6 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    // Force a fresh connection
-    await mongoose.disconnect();
     await dbConnect();
 
     // Validate that the ID is a valid MongoDB ObjectId
@@ -43,8 +40,6 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    // Force a fresh connection
-    await mongoose.disconnect();
     await dbConnect();
 
     // Validate that the ID is a valid MongoDB ObjectId
@@ -87,8 +82,6 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    // Force a fresh connection
-    await mongoose.disconnect();
     await dbConnect();
 
     // Validate that the ID is a valid MongoDB ObjectId

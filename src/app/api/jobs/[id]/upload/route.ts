@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
-import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb";
 import Job from "@/models/Job";
 
@@ -12,8 +11,6 @@ export async function POST(
   try {
     const { id } = await params;
     console.log("Upload API: Starting file upload for job:", id);
-    // Force a fresh connection
-    await mongoose.disconnect();
     await dbConnect();
 
     // Validate that the ID is a valid MongoDB ObjectId
