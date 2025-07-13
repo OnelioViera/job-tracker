@@ -23,6 +23,10 @@ export async function GET() {
 
     // Test if we can access the database
     const db = connection.connection.db;
+    if (!db) {
+      throw new Error("Database connection failed - db is undefined");
+    }
+
     console.log("Debug: Database name:", db.databaseName);
 
     // List collections
