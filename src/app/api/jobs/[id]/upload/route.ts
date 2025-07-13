@@ -38,6 +38,39 @@ export async function POST(
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
 
+    // Check if we're in a serverless environment (Vercel)
+    const isServerless = process.env.VERCEL === "1";
+
+    if (isServerless) {
+      console.log(
+        "Upload API: Running in serverless environment, skipping file write"
+      );
+      // In serverless, we can't write files to filesystem
+      // For now, just update the job with file metadata
+      const uploadedFiles = files
+        .filter((file) => file.type === "application/pdf")
+        .map((file) => ({
+          filename: `${Date.now()}-${file.name}`,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          uploadedAt: new Date(),
+        }));
+
+      if (uploadedFiles.length > 0) {
+        job.documents = [...(job.documents || []), ...uploadedFiles];
+        await job.save();
+        console.log("Upload API: Job updated with file metadata");
+      }
+
+      return NextResponse.json({
+        message: "Files processed successfully (serverless mode)",
+        uploadedFiles,
+        note: "File uploads are not supported in production yet. Please implement cloud storage.",
+      });
+    }
+
+    // Local development - write files to filesystem
     console.log("Upload API: Job found, creating upload directory");
     const uploadDir = join(process.cwd(), "public", "uploads", id);
     await mkdir(uploadDir, { recursive: true });
