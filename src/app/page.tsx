@@ -108,7 +108,7 @@ export default function Home() {
       const taskForDb: TaskData = {
         title: taskData.title,
         description: taskData.description,
-        dueDate: taskData.dueDate!.toISOString(),
+        dueDate: taskData.dueDate ? taskData.dueDate.toISOString() : undefined,
         priority: taskData.priority,
         status: taskData.status,
         assignedTo: taskData.assignedTo || undefined,
