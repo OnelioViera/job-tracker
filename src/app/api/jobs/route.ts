@@ -6,6 +6,8 @@ export async function GET() {
   try {
     console.log("API: Starting GET /api/jobs");
     console.log("API: MONGODB_URI exists:", !!process.env.MONGODB_URI);
+    console.log("API: Job model exists:", !!Job);
+    console.log("API: Job model name:", Job.modelName);
 
     await dbConnect();
     console.log("API: Database connected successfully");
@@ -16,10 +18,25 @@ export async function GET() {
     return NextResponse.json(jobs);
   } catch (error) {
     console.error("Error fetching jobs:", error);
+    console.error(
+      "Error stack:",
+      error instanceof Error ? error.stack : "No stack trace"
+    );
+    console.error(
+      "Error name:",
+      error instanceof Error ? error.name : "Unknown"
+    );
+    console.error(
+      "Error message:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+
     return NextResponse.json(
       {
         error: "Failed to fetch jobs",
         details: error instanceof Error ? error.message : "Unknown error",
+        name: error instanceof Error ? error.name : "Unknown",
+        stack: error instanceof Error ? error.stack : "No stack trace",
       },
       { status: 500 }
     );
