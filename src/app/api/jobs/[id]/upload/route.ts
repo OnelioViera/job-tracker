@@ -43,30 +43,46 @@ export async function POST(
 
     if (isServerless) {
       console.log(
-        "Upload API: Running in serverless environment, skipping file write"
+        "Upload API: Running in serverless environment, storing files as base64"
       );
-      // In serverless, we can't write files to filesystem
-      // For now, just update the job with file metadata
-      const uploadedFiles = files
-        .filter((file) => file.type === "application/pdf")
-        .map((file) => ({
+      // In serverless, store files as base64 in the database
+      const uploadedFiles = [];
+
+      for (const file of files) {
+        console.log(
+          "Upload API: Processing file:",
+          file.name,
+          "Type:",
+          file.type
+        );
+        if (file.type !== "application/pdf") {
+          console.log("Upload API: Skipping non-PDF file:", file.name);
+          continue; // Skip non-PDF files
+        }
+
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const base64Data = buffer.toString("base64");
+
+        uploadedFiles.push({
           filename: `${Date.now()}-${file.name}`,
           originalName: file.name,
           mimeType: file.type,
           size: file.size,
           uploadedAt: new Date(),
-        }));
+          fileData: base64Data, // Store the file content as base64
+        });
+      }
 
       if (uploadedFiles.length > 0) {
         job.documents = [...(job.documents || []), ...uploadedFiles];
         await job.save();
-        console.log("Upload API: Job updated with file metadata");
+        console.log("Upload API: Job updated with file data");
       }
 
       return NextResponse.json({
-        message: "Files processed successfully (serverless mode)",
+        message: "Files uploaded successfully (base64 storage)",
         uploadedFiles,
-        note: "File uploads are not supported in production yet. Please implement cloud storage.",
       });
     }
 

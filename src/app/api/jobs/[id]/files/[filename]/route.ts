@@ -37,15 +37,27 @@ export async function GET(
     const isServerless = process.env.VERCEL === "1";
 
     if (isServerless) {
-      // In serverless, we can't read files from filesystem
-      return NextResponse.json(
-        {
-          error: "File download not available in production",
-          message:
-            "Files are stored as metadata only. Please implement cloud storage for full file functionality.",
-        },
-        { status: 503 }
-      );
+      // In serverless, try to get file data from database
+      if (document.fileData) {
+        // Convert base64 back to buffer
+        const fileBuffer = Buffer.from(document.fileData, "base64");
+
+        return new NextResponse(fileBuffer, {
+          headers: {
+            "Content-Type": document.mimeType,
+            "Content-Disposition": `attachment; filename="${document.originalName}"`,
+          },
+        });
+      } else {
+        return NextResponse.json(
+          {
+            error: "File data not available",
+            message:
+              "This file was uploaded before base64 storage was implemented.",
+          },
+          { status: 404 }
+        );
+      }
     }
 
     // Local development - read file from filesystem
