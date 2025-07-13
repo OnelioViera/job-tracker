@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import mongoose from "mongoose";
 import dbConnect from "@/lib/mongodb";
 import Job from "@/models/Job";
 
@@ -9,6 +10,8 @@ export async function GET() {
     console.log("API: Job model exists:", !!Job);
     console.log("API: Job model name:", Job.modelName);
 
+    // Force a fresh connection
+    await mongoose.disconnect();
     await dbConnect();
     console.log("API: Database connected successfully");
 
