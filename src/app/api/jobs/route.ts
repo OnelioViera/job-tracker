@@ -4,13 +4,23 @@ import Job from "@/models/Job";
 
 export async function GET() {
   try {
+    console.log("API: Starting GET /api/jobs");
+    console.log("API: MONGODB_URI exists:", !!process.env.MONGODB_URI);
+
     await dbConnect();
+    console.log("API: Database connected successfully");
+
     const jobs = await Job.find({}).sort({ createdAt: -1 });
+    console.log("API: Found jobs count:", jobs.length);
+
     return NextResponse.json(jobs);
   } catch (error) {
     console.error("Error fetching jobs:", error);
     return NextResponse.json(
-      { error: "Failed to fetch jobs" },
+      {
+        error: "Failed to fetch jobs",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

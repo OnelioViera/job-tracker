@@ -4,13 +4,23 @@ import Task from "@/models/Task";
 
 export async function GET() {
   try {
+    console.log("API: Starting GET /api/tasks");
+    console.log("API: MONGODB_URI exists:", !!process.env.MONGODB_URI);
+
     await dbConnect();
+    console.log("API: Database connected successfully");
+
     const tasks = await Task.find({}).sort({ createdAt: -1 });
+    console.log("API: Found tasks count:", tasks.length);
+
     return NextResponse.json(tasks);
   } catch (error) {
     console.error("Error fetching tasks:", error);
     return NextResponse.json(
-      { error: "Failed to fetch tasks" },
+      {
+        error: "Failed to fetch tasks",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

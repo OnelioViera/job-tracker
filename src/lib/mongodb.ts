@@ -1,9 +1,12 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI!;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  console.error("MONGODB_URI is not defined in environment variables");
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local"
+  );
 }
 
 let cached: typeof mongoose | null = null;
@@ -15,12 +18,12 @@ async function dbConnect() {
 
   try {
     cached = await mongoose.connect(MONGODB_URI);
-    console.log('MongoDB connected successfully');
+    console.log("MongoDB connected successfully");
     return cached;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error("MongoDB connection error:", error);
     throw error;
   }
 }
 
-export default dbConnect; 
+export default dbConnect;
