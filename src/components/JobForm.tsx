@@ -119,6 +119,9 @@ export const JobForm: React.FC<JobFormProps> = ({
           await JobService.uploadFiles(editingJobId, selectedFiles);
           console.log('JobForm: Files uploaded successfully for editing job');
           
+          // Add a small delay to ensure the database has been updated
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
           // Refresh the job data to get the updated documents
           const updatedJob = await JobService.getJob(editingJobId);
           console.log('JobForm: Updated job data after editing:', updatedJob);
@@ -148,6 +151,9 @@ export const JobForm: React.FC<JobFormProps> = ({
           
           const uploadResult = await JobService.uploadFiles(newJob._id, selectedFiles);
           console.log('JobForm: Upload result:', uploadResult);
+          
+          // Add a small delay to ensure the database has been updated
+          await new Promise(resolve => setTimeout(resolve, 500));
           
           // Refresh the job data to get the updated documents
           const updatedJob = await JobService.getJob(newJob._id);
