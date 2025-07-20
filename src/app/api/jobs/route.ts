@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       await Promise.race([connectionPromise, timeoutPromise]);
       mongoConnected = true;
       console.log('POST /api/jobs: MongoDB connected successfully');
-    } catch (error) {
+    } catch {
       console.log('POST /api/jobs: MongoDB connection failed, using mock data');
       mongoConnected = false;
     }
