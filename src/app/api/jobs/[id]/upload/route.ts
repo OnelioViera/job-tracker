@@ -128,20 +128,10 @@ export async function POST(
     }
 
     // Always proceed with file upload
-    console.log('Upload API: Creating upload directory');
-    const uploadDir = join(process.cwd(), 'public', 'uploads', id);
-    console.log('Upload API: Upload directory path:', uploadDir);
-    try {
-      await mkdir(uploadDir, { recursive: true });
-      console.log('Upload API: Upload directory created');
-    } catch (dirError) {
-      console.error('Upload API: Error creating upload directory:', dirError);
-      return NextResponse.json(
-        { error: 'Failed to create upload directory' },
-        { status: 500 }
-      );
-    }
-
+    console.log('Upload API: Processing files for upload');
+    
+    // For serverless environments like Vercel, we'll store file info in the database
+    // but not actually write files to the filesystem
     const uploadedFiles = [];
 
     for (const file of files) {
@@ -157,12 +147,11 @@ export async function POST(
         const buffer = Buffer.from(bytes);
         console.log('Upload API: File converted, size:', buffer.length);
         
+        // In serverless environment, we don't write to filesystem
+        // Instead, we store the file metadata and optionally the content
         const filename = `${Date.now()}-${file.name}`;
-        const filepath = join(uploadDir, filename);
         
-        console.log('Upload API: Writing file to:', filepath);
-        await writeFile(filepath, buffer);
-        console.log('Upload API: File written successfully');
+        console.log('Upload API: File processed successfully:', filename);
         
         uploadedFiles.push({
           filename,
@@ -170,6 +159,8 @@ export async function POST(
           mimeType: file.type,
           size: file.size,
           uploadedAt: new Date(),
+          // Store the file content as base64 for serverless environments
+          content: buffer.toString('base64')
         });
       } catch (fileError) {
         console.error('Upload API: Error processing file:', file.name, fileError);

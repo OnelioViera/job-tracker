@@ -16,6 +16,7 @@ export interface IJob {
     mimeType: string;
     size: number;
     uploadedAt: Date;
+    content?: string; // Optional for serverless environments
   }>;
   createdAt: Date;
   updatedAt: Date;
@@ -76,6 +77,10 @@ const JobSchema = new mongoose.Schema<IJob>({
     uploadedAt: {
       type: Date,
       default: Date.now,
+    },
+    content: {
+      type: String,
+      required: false, // Optional for serverless environments
     },
   }],
 }, {
