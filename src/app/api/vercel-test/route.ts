@@ -18,7 +18,7 @@ export async function GET() {
       
       // Check if URI has proper format
       const isProperFormat = process.env.MONGODB_URI.includes('mongodb+srv://') && 
-                            process.env.MONGODB_URI.includes('@cluster0.ee7wlgw.mongodb.net/');
+                            process.env.MONGODB_URI.includes('@cluster0.vnvheh3.mongodb.net/');
       console.log('Has proper format:', isProperFormat);
     }
     
@@ -34,7 +34,7 @@ export async function GET() {
       uriLength: process.env.MONGODB_URI?.length || 0,
       hasDatabase: process.env.MONGODB_URI?.includes('/job-tracker') || false,
       hasProperFormat: process.env.MONGODB_URI?.includes('mongodb+srv://') && 
-                      process.env.MONGODB_URI?.includes('@cluster0.ee7wlgw.mongodb.net/') || false,
+                      process.env.MONGODB_URI?.includes('@cluster0.vnvheh3.mongodb.net/') || false,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -49,7 +49,7 @@ export async function GET() {
       uriLength: process.env.MONGODB_URI?.length || 0,
       hasDatabase: process.env.MONGODB_URI?.includes('/job-tracker') || false,
       hasProperFormat: process.env.MONGODB_URI?.includes('mongodb+srv://') && 
-                      process.env.MONGODB_URI?.includes('@cluster0.ee7wlgw.mongodb.net/') || false,
+                      process.env.MONGODB_URI?.includes('@cluster0.vnvheh3.mongodb.net/') || false,
       timestamp: new Date().toISOString()
     });
   }
