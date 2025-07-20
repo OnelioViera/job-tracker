@@ -47,6 +47,12 @@ export async function POST(
       // Valid MongoDB ObjectId format
       console.log('Upload API: Searching by MongoDB ObjectId');
       job = await Job.findById(id);
+      
+      // If not found by ObjectId, try as string (in case it's a string representation)
+      if (!job) {
+        console.log('Upload API: Job not found by ObjectId, trying as string');
+        job = await Job.findOne({ _id: id.toString() });
+      }
     } else {
       // Mock ID or other format - try to find by _id as string
       console.log('Upload API: Searching by string ID');
@@ -55,11 +61,25 @@ export async function POST(
     
     if (!job) {
       console.log('Upload API: Job not found in database, ID:', id);
-      console.log('Upload API: This might be a mock job or the job was not saved to database');
+      console.log('Upload API: This might be a timing issue or the job was not saved to database');
       
-      // For mock jobs, we'll still allow file uploads but won't update the database
-      // This is a fallback for when the job was created with mock data
-      console.log('Upload API: Proceeding with file upload for mock job');
+      // Try one more time with a small delay in case it's a timing issue
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (isMongoObjectId) {
+        job = await Job.findById(id);
+        if (!job) {
+          job = await Job.findOne({ _id: id.toString() });
+        }
+      } else {
+        job = await Job.findOne({ _id: id });
+      }
+      
+      if (!job) {
+        console.log('Upload API: Job still not found after retry, proceeding with file upload only');
+      } else {
+        console.log('Upload API: Job found after retry');
+      }
     } else {
       console.log('Upload API: Job found in database');
     }
@@ -110,7 +130,9 @@ export async function POST(
     return NextResponse.json({ 
       message: 'Files uploaded successfully',
       uploadedFiles,
-      jobUpdated: !!job
+      jobUpdated: !!job,
+      jobFound: !!job,
+      filesUploaded: uploadedFiles.length
     });
   } catch (error) {
     console.error('Upload API: Error uploading files:', error);

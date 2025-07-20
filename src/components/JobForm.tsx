@@ -116,8 +116,13 @@ export const JobForm: React.FC<JobFormProps> = ({
           console.log('JobForm: Starting file upload for editing job:', editingJobId);
           console.log('JobForm: Files to upload:', selectedFiles.map(f => f.name));
           
-          await JobService.uploadFiles(editingJobId, selectedFiles);
+          const uploadResult = await JobService.uploadFiles(editingJobId, selectedFiles);
           console.log('JobForm: Files uploaded successfully for editing job');
+          
+          // Check if the job was found and updated
+          if (!uploadResult?.jobFound) {
+            console.warn('JobForm: Job not found in database during upload, but files were saved');
+          }
           
           // Add a small delay to ensure the database has been updated
           await new Promise(resolve => setTimeout(resolve, 500));
@@ -151,6 +156,11 @@ export const JobForm: React.FC<JobFormProps> = ({
           
           const uploadResult = await JobService.uploadFiles(newJob._id, selectedFiles);
           console.log('JobForm: Upload result:', uploadResult);
+          
+          // Check if the job was found and updated
+          if (!uploadResult.jobFound) {
+            console.warn('JobForm: Job not found in database during upload, but files were saved');
+          }
           
           // Add a small delay to ensure the database has been updated
           await new Promise(resolve => setTimeout(resolve, 500));
