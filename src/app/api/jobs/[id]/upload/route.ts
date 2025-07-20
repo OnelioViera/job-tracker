@@ -39,23 +39,6 @@ export async function POST(
       );
     }
     
-    console.log('Upload API: Connecting to database...');
-    try {
-      await dbConnect();
-      console.log('Upload API: Database connected');
-      
-      // Test if Job model is working
-      console.log('Upload API: Testing Job model...');
-      const testJob = await Job.findOne().limit(1);
-      console.log('Upload API: Job model test result:', !!testJob);
-    } catch (dbError) {
-      console.error('Upload API: Database connection failed:', dbError);
-      return NextResponse.json(
-        { error: 'Database connection failed' },
-        { status: 500 }
-      );
-    }
-    
     console.log('Upload API: Parsing form data...');
     let formData: FormData;
     let files: File[];
@@ -81,12 +64,19 @@ export async function POST(
       );
     }
 
-    // Try to find the job - handle both MongoDB ObjectIds and mock IDs
-    let job;
-    const isMongoObjectId = /^[0-9a-fA-F]{24}$/.test(id);
-    console.log('Upload API: Is MongoDB ObjectId:', isMongoObjectId);
-    
+    // Try to connect to database (optional)
+    let job = null;
+    let dbConnected = false;
     try {
+      console.log('Upload API: Connecting to database...');
+      await dbConnect();
+      console.log('Upload API: Database connected');
+      dbConnected = true;
+      
+      // Try to find the job - handle both MongoDB ObjectIds and mock IDs
+      const isMongoObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+      console.log('Upload API: Is MongoDB ObjectId:', isMongoObjectId);
+      
       if (isMongoObjectId) {
         // Valid MongoDB ObjectId format
         console.log('Upload API: Searching by MongoDB ObjectId');
@@ -105,38 +95,39 @@ export async function POST(
         job = await Job.findOne({ _id: id });
         console.log('Upload API: Job found by string ID:', !!job);
       }
-    } catch (jobError) {
-      console.error('Upload API: Error looking up job:', jobError);
-      // Continue with file upload even if job lookup fails
-      console.log('Upload API: Continuing with file upload despite job lookup error');
-    }
-    
-    if (!job) {
-      console.log('Upload API: Job not found in database, ID:', id);
-      console.log('Upload API: This might be a timing issue or the job was not saved to database');
-      
-      // Try one more time with a small delay in case it's a timing issue
-      console.log('Upload API: Retrying with delay...');
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      if (isMongoObjectId) {
-        job = await Job.findById(id);
-        if (!job) {
-          job = await Job.findOne({ _id: id.toString() });
-        }
-      } else {
-        job = await Job.findOne({ _id: id });
-      }
       
       if (!job) {
-        console.log('Upload API: Job still not found after retry, proceeding with file upload only');
+        console.log('Upload API: Job not found in database, ID:', id);
+        console.log('Upload API: This might be a timing issue or the job was not saved to database');
+        
+        // Try one more time with a small delay in case it's a timing issue
+        console.log('Upload API: Retrying with delay...');
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (isMongoObjectId) {
+          job = await Job.findById(id);
+          if (!job) {
+            job = await Job.findOne({ _id: id.toString() });
+          }
+        } else {
+          job = await Job.findOne({ _id: id });
+        }
+        
+        if (!job) {
+          console.log('Upload API: Job still not found after retry, proceeding with file upload only');
+        } else {
+          console.log('Upload API: Job found after retry');
+        }
       } else {
-        console.log('Upload API: Job found after retry');
+        console.log('Upload API: Job found in database');
       }
-    } else {
-      console.log('Upload API: Job found in database');
+    } catch (dbError) {
+      console.error('Upload API: Database connection or job lookup failed:', dbError);
+      console.log('Upload API: Continuing with file upload only (no database operations)');
+      dbConnected = false;
     }
 
+    // Always proceed with file upload
     console.log('Upload API: Creating upload directory');
     const uploadDir = join(process.cwd(), 'public', 'uploads', id);
     console.log('Upload API: Upload directory path:', uploadDir);
@@ -188,8 +179,8 @@ export async function POST(
 
     console.log('Upload API: Files processed, count:', uploadedFiles.length);
 
-    // Only update the database if the job exists
-    if (job) {
+    // Only update the database if the job exists and database is connected
+    if (job && dbConnected) {
       console.log('Upload API: Files uploaded, updating job with documents');
       console.log('Upload API: Current job documents:', job.documents?.length || 0);
       try {
@@ -203,7 +194,7 @@ export async function POST(
         console.log('Upload API: Continuing without database update');
       }
     } else {
-      console.log('Upload API: Files uploaded for mock job, database not updated');
+      console.log('Upload API: Files uploaded, database not updated (job not found or db not connected)');
     }
 
     console.log('Upload API: Upload completed successfully');
@@ -211,9 +202,10 @@ export async function POST(
     return NextResponse.json({ 
       message: 'Files uploaded successfully',
       uploadedFiles,
-      jobUpdated: !!job,
+      jobUpdated: !!(job && dbConnected),
       jobFound: !!job,
-      filesUploaded: uploadedFiles.length
+      filesUploaded: uploadedFiles.length,
+      dbConnected
     });
   } catch (error) {
     console.error('=== UPLOAD API ERROR ===');
