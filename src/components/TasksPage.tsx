@@ -14,8 +14,7 @@ interface TasksPageProps {
 export const TasksPage: React.FC<TasksPageProps> = ({ 
   tasks, 
   onAddTask, 
-  onDeleteTask, 
-  onEditTask 
+  onDeleteTask
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);

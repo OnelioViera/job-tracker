@@ -82,7 +82,7 @@ export class JobService {
     return response.json();
   }
 
-  static async uploadFiles(jobId: string, files: File[]): Promise<any> {
+  static async uploadFiles(jobId: string, files: File[]): Promise<Record<string, unknown>> {
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);

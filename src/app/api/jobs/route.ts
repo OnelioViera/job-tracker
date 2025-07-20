@@ -121,11 +121,8 @@ export async function POST(request: NextRequest) {
     const job = await Job.create(body);
     console.log('API: Created job:', job);
     return NextResponse.json(job, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/jobs: Error creating job:', error);
-    if (error.errors) {
-      console.error('API: Validation errors:', JSON.stringify(error.errors, null, 2));
-    }
     console.log('POST /api/jobs: Falling back to mock data due to error');
     const newJob = {
       _id: Date.now().toString(),

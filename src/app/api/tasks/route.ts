@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     const task = await Task.create(body);
     console.log('API: Created task:', task);
     return NextResponse.json(task, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('POST /api/tasks: Error creating task:', error);
     console.log('POST /api/tasks: Falling back to mock data due to error');
     const newTask = {

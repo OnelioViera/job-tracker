@@ -1,6 +1,5 @@
 import React from 'react';
 import { TaskForm, Task } from './TaskForm';
-import { ITask } from '../models/Task';
 
 interface TaskModalProps {
   isOpen: boolean;

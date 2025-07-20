@@ -1,8 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
-import dbConnect from '@/lib/mongodb';
-import Job from '@/models/Job';
 
 export async function GET(
   request: NextRequest,
