@@ -139,6 +139,14 @@ export const JobForm: React.FC<JobFormProps> = ({
           setSelectedFiles([]);
         } catch (error) {
           console.error('JobForm: Error uploading files for editing job:', error);
+          console.error('JobForm: Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : 'Unknown',
+            jobId: editingJobId,
+            filesCount: selectedFiles.length,
+            fileNames: selectedFiles.map(f => f.name)
+          });
           alert('Job updated but files failed to upload. Please try uploading files again.');
         } finally {
           setUploading(false);
@@ -179,7 +187,11 @@ export const JobForm: React.FC<JobFormProps> = ({
           console.error('JobForm: Error uploading files:', error);
           console.error('JobForm: Error details:', {
             message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : undefined
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : 'Unknown',
+            jobId: newJob._id,
+            filesCount: selectedFiles.length,
+            fileNames: selectedFiles.map(f => f.name)
           });
           alert('Job created but files failed to upload. Please try uploading files again.');
         } finally {

@@ -10,11 +10,15 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    console.log('=== UPLOAD API START ===');
     console.log('Upload API: Starting file upload for job:', id);
     console.log('Upload API: Job ID type:', typeof id);
     console.log('Upload API: Job ID length:', id?.length);
+    console.log('Upload API: Job ID value:', id);
     
+    console.log('Upload API: Connecting to database...');
     await dbConnect();
+    console.log('Upload API: Database connected');
     
     // Validate that the ID is not empty
     if (!id || id.trim() === '') {
@@ -25,10 +29,13 @@ export async function POST(
       );
     }
     
+    console.log('Upload API: Parsing form data...');
     const formData = await request.formData();
     const files = formData.getAll('files') as File[];
     
     console.log('Upload API: Received files:', files.length);
+    console.log('Upload API: File names:', files.map(f => f.name));
+    console.log('Upload API: File types:', files.map(f => f.type));
     
     if (!files || files.length === 0) {
       console.log('Upload API: No files received');
@@ -47,16 +54,19 @@ export async function POST(
       // Valid MongoDB ObjectId format
       console.log('Upload API: Searching by MongoDB ObjectId');
       job = await Job.findById(id);
+      console.log('Upload API: Job found by ObjectId:', !!job);
       
       // If not found by ObjectId, try as string (in case it's a string representation)
       if (!job) {
         console.log('Upload API: Job not found by ObjectId, trying as string');
         job = await Job.findOne({ _id: id.toString() });
+        console.log('Upload API: Job found by string:', !!job);
       }
     } else {
       // Mock ID or other format - try to find by _id as string
       console.log('Upload API: Searching by string ID');
       job = await Job.findOne({ _id: id });
+      console.log('Upload API: Job found by string ID:', !!job);
     }
     
     if (!job) {
@@ -64,6 +74,7 @@ export async function POST(
       console.log('Upload API: This might be a timing issue or the job was not saved to database');
       
       // Try one more time with a small delay in case it's a timing issue
+      console.log('Upload API: Retrying with delay...');
       await new Promise(resolve => setTimeout(resolve, 100));
       
       if (isMongoObjectId) {
@@ -86,7 +97,9 @@ export async function POST(
 
     console.log('Upload API: Creating upload directory');
     const uploadDir = join(process.cwd(), 'public', 'uploads', id);
+    console.log('Upload API: Upload directory path:', uploadDir);
     await mkdir(uploadDir, { recursive: true });
+    console.log('Upload API: Upload directory created');
 
     const uploadedFiles = [];
 
@@ -97,14 +110,17 @@ export async function POST(
         continue; // Skip non-PDF files
       }
 
+      console.log('Upload API: Converting file to buffer...');
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
+      console.log('Upload API: File converted, size:', buffer.length);
       
       const filename = `${Date.now()}-${file.name}`;
       const filepath = join(uploadDir, filename);
       
       console.log('Upload API: Writing file to:', filepath);
       await writeFile(filepath, buffer);
+      console.log('Upload API: File written successfully');
       
       uploadedFiles.push({
         filename,
@@ -115,11 +131,15 @@ export async function POST(
       });
     }
 
+    console.log('Upload API: Files processed, count:', uploadedFiles.length);
+
     // Only update the database if the job exists
     if (job) {
       console.log('Upload API: Files uploaded, updating job with documents');
+      console.log('Upload API: Current job documents:', job.documents?.length || 0);
       // Update job with new documents
       job.documents = [...(job.documents || []), ...uploadedFiles];
+      console.log('Upload API: Updated job documents count:', job.documents.length);
       await job.save();
       console.log('Upload API: Job updated successfully in database');
     } else {
@@ -127,6 +147,7 @@ export async function POST(
     }
 
     console.log('Upload API: Upload completed successfully');
+    console.log('=== UPLOAD API END ===');
     return NextResponse.json({ 
       message: 'Files uploaded successfully',
       uploadedFiles,
@@ -135,7 +156,11 @@ export async function POST(
       filesUploaded: uploadedFiles.length
     });
   } catch (error) {
+    console.error('=== UPLOAD API ERROR ===');
     console.error('Upload API: Error uploading files:', error);
+    console.error('Upload API: Error stack:', error instanceof Error ? error.stack : 'No stack');
+    console.error('Upload API: Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('=== UPLOAD API ERROR END ===');
     return NextResponse.json(
       { error: 'Failed to upload files' },
       { status: 500 }

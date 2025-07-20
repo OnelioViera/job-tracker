@@ -83,16 +83,20 @@ export class JobService {
   }
 
   static async uploadFiles(jobId: string, files: File[]): Promise<Record<string, unknown>> {
+    console.log('=== JOB SERVICE UPLOAD START ===');
     console.log('JobService: Starting file upload for job:', jobId);
     console.log('JobService: Files to upload:', files.map(f => f.name));
     console.log('JobService: Job ID type:', typeof jobId);
     console.log('JobService: Job ID length:', jobId?.length);
+    console.log('JobService: Job ID value:', jobId);
     
     const formData = new FormData();
     files.forEach(file => {
+      console.log('JobService: Adding file to FormData:', file.name, 'Size:', file.size);
       formData.append('files', file);
     });
 
+    console.log('JobService: FormData created, making fetch request...');
     const response = await fetch(`/api/jobs/${jobId}/upload`, {
       method: 'POST',
       body: formData,
@@ -100,15 +104,18 @@ export class JobService {
 
     console.log('JobService: Upload response status:', response.status);
     console.log('JobService: Upload response ok:', response.ok);
+    console.log('JobService: Upload response status text:', response.statusText);
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('JobService: Upload error response:', errorText);
+      console.error('JobService: Upload failed with status:', response.status);
       throw new Error(`Failed to upload files: ${response.status} ${errorText}`);
     }
 
     const result = await response.json();
     console.log('JobService: Upload result:', result);
+    console.log('=== JOB SERVICE UPLOAD END ===');
     return result;
   }
 
