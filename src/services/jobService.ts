@@ -85,6 +85,8 @@ export class JobService {
   static async uploadFiles(jobId: string, files: File[]): Promise<Record<string, unknown>> {
     console.log('JobService: Starting file upload for job:', jobId);
     console.log('JobService: Files to upload:', files.map(f => f.name));
+    console.log('JobService: Job ID type:', typeof jobId);
+    console.log('JobService: Job ID length:', jobId?.length);
     
     const formData = new FormData();
     files.forEach(file => {

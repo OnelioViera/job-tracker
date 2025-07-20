@@ -11,13 +11,16 @@ export async function POST(
   try {
     const { id } = await params;
     console.log('Upload API: Starting file upload for job:', id);
+    console.log('Upload API: Job ID type:', typeof id);
+    console.log('Upload API: Job ID length:', id?.length);
+    
     await dbConnect();
     
-    // Validate that the ID is a valid MongoDB ObjectId
-    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
-      console.log('Upload API: Invalid job ID format:', id);
+    // Validate that the ID is not empty
+    if (!id || id.trim() === '') {
+      console.log('Upload API: Empty job ID');
       return NextResponse.json(
-        { error: 'Invalid job ID format' },
+        { error: 'Job ID is required' },
         { status: 400 }
       );
     }
@@ -35,16 +38,33 @@ export async function POST(
       );
     }
 
-    const job = await Job.findById(id);
+    // Try to find the job - handle both MongoDB ObjectIds and mock IDs
+    let job;
+    const isMongoObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+    console.log('Upload API: Is MongoDB ObjectId:', isMongoObjectId);
+    
+    if (isMongoObjectId) {
+      // Valid MongoDB ObjectId format
+      console.log('Upload API: Searching by MongoDB ObjectId');
+      job = await Job.findById(id);
+    } else {
+      // Mock ID or other format - try to find by _id as string
+      console.log('Upload API: Searching by string ID');
+      job = await Job.findOne({ _id: id });
+    }
+    
     if (!job) {
-      console.log('Upload API: Job not found:', id);
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      );
+      console.log('Upload API: Job not found in database, ID:', id);
+      console.log('Upload API: This might be a mock job or the job was not saved to database');
+      
+      // For mock jobs, we'll still allow file uploads but won't update the database
+      // This is a fallback for when the job was created with mock data
+      console.log('Upload API: Proceeding with file upload for mock job');
+    } else {
+      console.log('Upload API: Job found in database');
     }
 
-    console.log('Upload API: Job found, creating upload directory');
+    console.log('Upload API: Creating upload directory');
     const uploadDir = join(process.cwd(), 'public', 'uploads', id);
     await mkdir(uploadDir, { recursive: true });
 
@@ -75,15 +95,22 @@ export async function POST(
       });
     }
 
-    console.log('Upload API: Files uploaded, updating job with documents');
-    // Update job with new documents
-    job.documents = [...(job.documents || []), ...uploadedFiles];
-    await job.save();
+    // Only update the database if the job exists
+    if (job) {
+      console.log('Upload API: Files uploaded, updating job with documents');
+      // Update job with new documents
+      job.documents = [...(job.documents || []), ...uploadedFiles];
+      await job.save();
+      console.log('Upload API: Job updated successfully in database');
+    } else {
+      console.log('Upload API: Files uploaded for mock job, database not updated');
+    }
 
-    console.log('Upload API: Job updated successfully');
+    console.log('Upload API: Upload completed successfully');
     return NextResponse.json({ 
       message: 'Files uploaded successfully',
-      uploadedFiles 
+      uploadedFiles,
+      jobUpdated: !!job
     });
   } catch (error) {
     console.error('Upload API: Error uploading files:', error);

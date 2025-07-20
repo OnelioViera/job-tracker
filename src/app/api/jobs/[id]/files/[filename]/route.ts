@@ -10,11 +10,11 @@ export async function GET(
   try {
     const { id, filename } = await params;
     
-    // Validate that the ID is a valid MongoDB ObjectId
-    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
-      console.log('File download: Invalid job ID format:', id);
+    // Validate that the ID is not empty
+    if (!id || id.trim() === '') {
+      console.log('File download: Empty job ID');
       return NextResponse.json(
-        { error: 'Invalid job ID format' },
+        { error: 'Job ID is required' },
         { status: 400 }
       );
     }

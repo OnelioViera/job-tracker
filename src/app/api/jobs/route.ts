@@ -75,28 +75,25 @@ export async function POST(request: NextRequest) {
       setTimeout(() => reject(new Error('Connection timeout')), 5000)
     );
     
+    let mongoConnected = false;
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch {
+      mongoConnected = true;
+      console.log('POST /api/jobs: MongoDB connected successfully');
+    } catch (error) {
       console.log('POST /api/jobs: MongoDB connection failed, using mock data');
-      const newJob = {
-        _id: Date.now().toString(),
-        ...body,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        documents: []
-      };
-      return NextResponse.json(newJob, { status: 201 });
+      mongoConnected = false;
     }
     
-    if (useMockData) {
+    if (!mongoConnected || useMockData) {
       console.log('POST /api/jobs: Using mock data');
       // Create a new mock job
       const newMockJob = {
         _id: Date.now().toString(),
         ...body,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        documents: []
       };
       return NextResponse.json(newMockJob, { status: 201 });
     }
