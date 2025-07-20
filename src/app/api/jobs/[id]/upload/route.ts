@@ -9,16 +9,26 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
     console.log('=== UPLOAD API START ===');
+    
+    // Basic parameter validation first
+    let id: string;
+    try {
+      const paramsResult = await params;
+      id = paramsResult.id;
+      console.log('Upload API: Job ID from params:', id);
+    } catch (paramError) {
+      console.error('Upload API: Error getting params:', paramError);
+      return NextResponse.json(
+        { error: 'Invalid job ID parameter' },
+        { status: 400 }
+      );
+    }
+    
     console.log('Upload API: Starting file upload for job:', id);
     console.log('Upload API: Job ID type:', typeof id);
     console.log('Upload API: Job ID length:', id?.length);
     console.log('Upload API: Job ID value:', id);
-    
-    console.log('Upload API: Connecting to database...');
-    await dbConnect();
-    console.log('Upload API: Database connected');
     
     // Validate that the ID is not empty
     if (!id || id.trim() === '') {
@@ -29,13 +39,34 @@ export async function POST(
       );
     }
     
-    console.log('Upload API: Parsing form data...');
-    const formData = await request.formData();
-    const files = formData.getAll('files') as File[];
+    console.log('Upload API: Connecting to database...');
+    try {
+      await dbConnect();
+      console.log('Upload API: Database connected');
+    } catch (dbError) {
+      console.error('Upload API: Database connection failed:', dbError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
     
-    console.log('Upload API: Received files:', files.length);
-    console.log('Upload API: File names:', files.map(f => f.name));
-    console.log('Upload API: File types:', files.map(f => f.type));
+    console.log('Upload API: Parsing form data...');
+    let formData: FormData;
+    let files: File[];
+    try {
+      formData = await request.formData();
+      files = formData.getAll('files') as File[];
+      console.log('Upload API: Received files:', files.length);
+      console.log('Upload API: File names:', files.map(f => f.name));
+      console.log('Upload API: File types:', files.map(f => f.type));
+    } catch (formError) {
+      console.error('Upload API: Error parsing form data:', formError);
+      return NextResponse.json(
+        { error: 'Failed to parse uploaded files' },
+        { status: 400 }
+      );
+    }
     
     if (!files || files.length === 0) {
       console.log('Upload API: No files received');
@@ -50,23 +81,29 @@ export async function POST(
     const isMongoObjectId = /^[0-9a-fA-F]{24}$/.test(id);
     console.log('Upload API: Is MongoDB ObjectId:', isMongoObjectId);
     
-    if (isMongoObjectId) {
-      // Valid MongoDB ObjectId format
-      console.log('Upload API: Searching by MongoDB ObjectId');
-      job = await Job.findById(id);
-      console.log('Upload API: Job found by ObjectId:', !!job);
-      
-      // If not found by ObjectId, try as string (in case it's a string representation)
-      if (!job) {
-        console.log('Upload API: Job not found by ObjectId, trying as string');
-        job = await Job.findOne({ _id: id.toString() });
-        console.log('Upload API: Job found by string:', !!job);
+    try {
+      if (isMongoObjectId) {
+        // Valid MongoDB ObjectId format
+        console.log('Upload API: Searching by MongoDB ObjectId');
+        job = await Job.findById(id);
+        console.log('Upload API: Job found by ObjectId:', !!job);
+        
+        // If not found by ObjectId, try as string (in case it's a string representation)
+        if (!job) {
+          console.log('Upload API: Job not found by ObjectId, trying as string');
+          job = await Job.findOne({ _id: id.toString() });
+          console.log('Upload API: Job found by string:', !!job);
+        }
+      } else {
+        // Mock ID or other format - try to find by _id as string
+        console.log('Upload API: Searching by string ID');
+        job = await Job.findOne({ _id: id });
+        console.log('Upload API: Job found by string ID:', !!job);
       }
-    } else {
-      // Mock ID or other format - try to find by _id as string
-      console.log('Upload API: Searching by string ID');
-      job = await Job.findOne({ _id: id });
-      console.log('Upload API: Job found by string ID:', !!job);
+    } catch (jobError) {
+      console.error('Upload API: Error looking up job:', jobError);
+      // Continue with file upload even if job lookup fails
+      console.log('Upload API: Continuing with file upload despite job lookup error');
     }
     
     if (!job) {
@@ -98,8 +135,16 @@ export async function POST(
     console.log('Upload API: Creating upload directory');
     const uploadDir = join(process.cwd(), 'public', 'uploads', id);
     console.log('Upload API: Upload directory path:', uploadDir);
-    await mkdir(uploadDir, { recursive: true });
-    console.log('Upload API: Upload directory created');
+    try {
+      await mkdir(uploadDir, { recursive: true });
+      console.log('Upload API: Upload directory created');
+    } catch (dirError) {
+      console.error('Upload API: Error creating upload directory:', dirError);
+      return NextResponse.json(
+        { error: 'Failed to create upload directory' },
+        { status: 500 }
+      );
+    }
 
     const uploadedFiles = [];
 
@@ -110,25 +155,30 @@ export async function POST(
         continue; // Skip non-PDF files
       }
 
-      console.log('Upload API: Converting file to buffer...');
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      console.log('Upload API: File converted, size:', buffer.length);
-      
-      const filename = `${Date.now()}-${file.name}`;
-      const filepath = join(uploadDir, filename);
-      
-      console.log('Upload API: Writing file to:', filepath);
-      await writeFile(filepath, buffer);
-      console.log('Upload API: File written successfully');
-      
-      uploadedFiles.push({
-        filename,
-        originalName: file.name,
-        mimeType: file.type,
-        size: file.size,
-        uploadedAt: new Date(),
-      });
+      try {
+        console.log('Upload API: Converting file to buffer...');
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        console.log('Upload API: File converted, size:', buffer.length);
+        
+        const filename = `${Date.now()}-${file.name}`;
+        const filepath = join(uploadDir, filename);
+        
+        console.log('Upload API: Writing file to:', filepath);
+        await writeFile(filepath, buffer);
+        console.log('Upload API: File written successfully');
+        
+        uploadedFiles.push({
+          filename,
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          uploadedAt: new Date(),
+        });
+      } catch (fileError) {
+        console.error('Upload API: Error processing file:', file.name, fileError);
+        // Continue with other files
+      }
     }
 
     console.log('Upload API: Files processed, count:', uploadedFiles.length);
