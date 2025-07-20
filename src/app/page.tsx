@@ -270,7 +270,7 @@ export default function Home() {
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
       
       {activeTab === 'dashboard' && (
-        <Dashboard jobs={jobs} onAddJob={handleAddJob} />
+        <Dashboard jobs={jobs} tasks={tasks} />
       )}
       
       {activeTab === 'jobs' && (
@@ -291,10 +291,10 @@ export default function Home() {
           tasks={tasks} 
           onAddTask={handleAddTask} 
           onDeleteTask={handleDeleteTask}
-          onUpdateTask={handleUpdateTask}
-          onTaskUpdated={handleTaskUpdated}
-          projectManagers={projectManagers}
-          jobs={jobs}
+          onEditTask={(taskId) => {
+            // Handle edit task - for now just log it
+            console.log('Edit task:', taskId);
+          }}
         />
       )}
 
