@@ -15,15 +15,26 @@ let useMockData = false;
 let connectionAttempted = false;
 
 async function dbConnect() {
-  // If we've already determined we should use mock data, return immediately
-  if (connectionAttempted && useMockData) {
-    console.log('Using mock data (connection previously failed)');
-    return {} as typeof mongoose;
+  // If we have a valid cached connection, use it
+  if (cached && mongoose.connection.readyState === 1) {
+    console.log('Using cached MongoDB connection');
+    useMockData = false;
+    return cached;
   }
 
-  if (cached && !useMockData) {
-    console.log('Using cached MongoDB connection');
+  // If connection was attempted and failed, but we have a valid connection now, reset
+  if (connectionAttempted && mongoose.connection.readyState === 1) {
+    console.log('MongoDB connection is now valid, resetting mock data flag');
+    useMockData = false;
+    cached = mongoose;
     return cached;
+  }
+
+  // If we previously failed and don't have a valid connection, use mock data
+  if (connectionAttempted && mongoose.connection.readyState !== 1) {
+    console.log('Using mock data (connection previously failed)');
+    useMockData = true;
+    return {} as typeof mongoose;
   }
 
   try {
