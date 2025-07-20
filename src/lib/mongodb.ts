@@ -3,9 +3,11 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 console.log('MongoDB URI:', MONGODB_URI ? 'Set' : 'Not set');
+console.log('Environment:', process.env.NODE_ENV);
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+  console.error('MONGODB_URI is not defined in environment variables');
+  throw new Error('Please define the MONGODB_URI environment variable');
 }
 
 let cached: typeof mongoose | null = null;
@@ -26,13 +28,16 @@ async function dbConnect() {
 
   try {
     console.log('Attempting to connect to MongoDB...');
+    console.log('URI length:', MONGODB_URI.length);
     connectionAttempted = true;
     
-    // Set a shorter timeout for the connection
+    // Set connection options
     const connectionOptions = {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 5000,
-      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000, // Increased timeout
+      socketTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+      maxPoolSize: 10,
+      minPoolSize: 1,
     };
     
     cached = await mongoose.connect(MONGODB_URI, connectionOptions);
