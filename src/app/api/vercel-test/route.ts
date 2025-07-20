@@ -10,6 +10,16 @@ export async function GET() {
     
     if (process.env.MONGODB_URI) {
       console.log('MONGODB_URI starts with:', process.env.MONGODB_URI.substring(0, 30) + '...');
+      console.log('MONGODB_URI ends with:', '...' + process.env.MONGODB_URI.substring(process.env.MONGODB_URI.length - 20));
+      
+      // Check if URI contains database name
+      const hasDatabase = process.env.MONGODB_URI.includes('/job-tracker');
+      console.log('Contains database name:', hasDatabase);
+      
+      // Check if URI has proper format
+      const isProperFormat = process.env.MONGODB_URI.includes('mongodb+srv://') && 
+                            process.env.MONGODB_URI.includes('@cluster0.ee7wlgw.mongodb.net/');
+      console.log('Has proper format:', isProperFormat);
     }
     
     // Test the connection
@@ -22,6 +32,9 @@ export async function GET() {
       environment: process.env.NODE_ENV,
       uriExists: !!process.env.MONGODB_URI,
       uriLength: process.env.MONGODB_URI?.length || 0,
+      hasDatabase: process.env.MONGODB_URI?.includes('/job-tracker') || false,
+      hasProperFormat: process.env.MONGODB_URI?.includes('mongodb+srv://') && 
+                      process.env.MONGODB_URI?.includes('@cluster0.ee7wlgw.mongodb.net/') || false,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -34,6 +47,9 @@ export async function GET() {
       environment: process.env.NODE_ENV,
       uriExists: !!process.env.MONGODB_URI,
       uriLength: process.env.MONGODB_URI?.length || 0,
+      hasDatabase: process.env.MONGODB_URI?.includes('/job-tracker') || false,
+      hasProperFormat: process.env.MONGODB_URI?.includes('mongodb+srv://') && 
+                      process.env.MONGODB_URI?.includes('@cluster0.ee7wlgw.mongodb.net/') || false,
       timestamp: new Date().toISOString()
     });
   }
