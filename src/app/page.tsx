@@ -133,13 +133,6 @@ export default function Home() {
     });
   };
 
-  const handleTaskUpdated = (updatedTask: ITask) => {
-    setTasks((prev) => {
-      const newTasks = prev.map((task) => task._id === updatedTask._id ? updatedTask : task);
-      return newTasks;
-    });
-  };
-
   const handleDeleteJob = async (jobId: string) => {
     try {
       await JobService.deleteJob(jobId);
@@ -198,29 +191,6 @@ export default function Home() {
     } catch (err) {
       setError('Failed to update job');
       console.error('Error updating job:', err);
-    }
-  };
-
-  const handleUpdateTask = async (taskId: string, updatedTaskData: Partial<Task>) => {
-    try {
-      // Convert Task interface to TaskData for database
-      const taskForDb: Partial<TaskData> = {};
-      if (updatedTaskData.title !== undefined) taskForDb.title = updatedTaskData.title;
-      if (updatedTaskData.description !== undefined) taskForDb.description = updatedTaskData.description;
-      if (updatedTaskData.dueDate !== undefined) {
-        taskForDb.dueDate = updatedTaskData.dueDate instanceof Date 
-          ? updatedTaskData.dueDate.toISOString() 
-          : (updatedTaskData.dueDate === null ? undefined : updatedTaskData.dueDate as string);
-      }
-      if (updatedTaskData.priority !== undefined) taskForDb.priority = updatedTaskData.priority;
-      if (updatedTaskData.status !== undefined) taskForDb.status = updatedTaskData.status;
-      if (updatedTaskData.assignedTo !== undefined) taskForDb.assignedTo = updatedTaskData.assignedTo;
-      
-      const updatedTask = await TaskService.updateTask(taskId, taskForDb);
-      setTasks((prev) => prev.map((task) => task._id === taskId ? updatedTask : task));
-    } catch (err) {
-      setError('Failed to update task');
-      console.error('Error updating task:', err);
     }
   };
 
