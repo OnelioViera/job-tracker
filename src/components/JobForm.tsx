@@ -146,8 +146,8 @@ export const JobForm: React.FC<JobFormProps> = ({
           console.log('JobForm: Starting file upload for job:', newJob._id);
           console.log('JobForm: Files to upload:', selectedFiles.map(f => f.name));
           
-          await JobService.uploadFiles(newJob._id, selectedFiles);
-          console.log('JobForm: Files uploaded successfully');
+          const uploadResult = await JobService.uploadFiles(newJob._id, selectedFiles);
+          console.log('JobForm: Upload result:', uploadResult);
           
           // Refresh the job data to get the updated documents
           const updatedJob = await JobService.getJob(newJob._id);
@@ -161,6 +161,10 @@ export const JobForm: React.FC<JobFormProps> = ({
           setSelectedFiles([]);
         } catch (error) {
           console.error('JobForm: Error uploading files:', error);
+          console.error('JobForm: Error details:', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+            stack: error instanceof Error ? error.stack : undefined
+          });
           alert('Job created but files failed to upload');
         } finally {
           setUploading(false);

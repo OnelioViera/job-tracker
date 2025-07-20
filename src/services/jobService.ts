@@ -83,6 +83,9 @@ export class JobService {
   }
 
   static async uploadFiles(jobId: string, files: File[]): Promise<Record<string, unknown>> {
+    console.log('JobService: Starting file upload for job:', jobId);
+    console.log('JobService: Files to upload:', files.map(f => f.name));
+    
     const formData = new FormData();
     files.forEach(file => {
       formData.append('files', file);
@@ -93,11 +96,18 @@ export class JobService {
       body: formData,
     });
 
+    console.log('JobService: Upload response status:', response.status);
+    console.log('JobService: Upload response ok:', response.ok);
+
     if (!response.ok) {
-      throw new Error('Failed to upload files');
+      const errorText = await response.text();
+      console.error('JobService: Upload error response:', errorText);
+      throw new Error(`Failed to upload files: ${response.status} ${errorText}`);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('JobService: Upload result:', result);
+    return result;
   }
 
   static getFileDownloadUrl(jobId: string, filename: string): string {
