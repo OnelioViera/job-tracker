@@ -45,7 +45,7 @@ export class JobService {
     return result;
   }
 
-  static async updateJob(id: string, jobData: JobData): Promise<IJob> {
+  static async updateJob(id: string, jobData: Partial<JobData>): Promise<IJob> {
     const response = await fetch(`/api/jobs/${id}`, {
       method: 'PUT',
       headers: {
