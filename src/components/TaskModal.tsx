@@ -5,29 +5,15 @@ import { ITask } from '../models/Task';
 interface TaskModalProps {
   isOpen: boolean;
   onClose: () => void;
-  isEditing: boolean;
-  editingTask: Task | null;
-  editingTaskId?: string | null;
-  onAddTask: (task: Task) => Promise<ITask>;
-  onUpdateTask: (task: Task) => void;
-  onCancelEdit: () => void;
-  onTaskUpdated?: (task: ITask) => void;
-  projectManagers: string[];
-  jobs: any[];
+  onSubmit: (task: Task) => void;
+  initialTask?: Task;
 }
 
-export const TaskModal: React.FC<TaskModalProps> = ({
-  isOpen,
-  onClose,
-  isEditing,
-  editingTask,
-  editingTaskId,
-  onAddTask,
-  onUpdateTask,
-  onCancelEdit,
-  onTaskUpdated,
-  projectManagers,
-  jobs
+export const TaskModal: React.FC<TaskModalProps> = ({ 
+  isOpen, 
+  onClose, 
+  onSubmit,
+  initialTask
 }) => {
   if (!isOpen) return null;
 
@@ -37,10 +23,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   };
 
-  const handleCancel = () => {
-    if (isEditing) {
-      onCancelEdit();
-    }
+  const handleSubmit = (task: Task) => {
+    onSubmit(task);
     onClose();
   };
 
@@ -52,10 +36,10 @@ export const TaskModal: React.FC<TaskModalProps> = ({
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-bold text-gray-900">
-            {isEditing ? 'Edit Task' : 'Add New Task'}
+            {initialTask ? 'Edit Task' : 'Add New Task'}
           </h2>
           <button
-            onClick={handleCancel}
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
           >
             ×
@@ -63,23 +47,9 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         </div>
         
         <div className="p-6">
-          <TaskForm
-            onAddTask={async (task) => {
-              const result = await onAddTask(task);
-              onClose();
-              return result;
-            }}
-            onTaskUpdated={onTaskUpdated}
-            isEditing={isEditing}
-            editingTask={editingTask}
-            editingTaskId={editingTaskId}
-            onUpdateTask={(task) => {
-              onUpdateTask(task);
-              onClose();
-            }}
-            onCancelEdit={handleCancel}
-            projectManagers={projectManagers}
-            jobs={jobs}
+          <TaskForm 
+            onSubmit={handleSubmit}
+            initialTask={initialTask}
           />
         </div>
       </div>

@@ -5,95 +5,84 @@ import { ITask } from '../models/Task';
 
 export interface Task {
   title: string;
-  description?: string;
+  description: string;
   dueDate: Date | null;
-  priority: 'High' | 'Medium' | 'Low';
+  priority: 'Low' | 'Medium' | 'High';
   status: 'Pending' | 'In Progress' | 'Completed';
   assignedTo?: string;
 }
 
 interface TaskFormProps {
-  onAddTask: (task: Task) => Promise<ITask>;
-  onTaskUpdated?: (task: ITask) => void;
-  isEditing?: boolean;
-  editingTask?: Task | null;
-  editingTaskId?: string | null;
-  onUpdateTask?: (task: Task) => void;
-  onCancelEdit?: () => void;
-  projectManagers: string[];
-  jobs: any[];
+  onSubmit: (task: Task) => void;
+  initialTask?: Task;
 }
 
-export const TaskForm: React.FC<TaskFormProps> = ({ 
-  onAddTask, 
-  onTaskUpdated,
-  isEditing = false, 
-  editingTask = null, 
-  editingTaskId = null,
-  onUpdateTask, 
-  onCancelEdit,
-  projectManagers,
-  jobs
-}) => {
-  const [form, setForm] = useState<Task>({
-    title: '',
-    description: '',
-    dueDate: null,
-    priority: 'Low',
-    status: 'Pending',
-    assignedTo: '',
-  });
+export const TaskForm: React.FC<TaskFormProps> = ({ onSubmit, initialTask }) => {
+  const [title, setTitle] = useState(initialTask?.title || '');
+  const [description, setDescription] = useState(initialTask?.description || '');
+  const [dueDate, setDueDate] = useState<Date | null>(initialTask?.dueDate || null);
+  const [priority, setPriority] = useState<'Low' | 'Medium' | 'High'>(initialTask?.priority || 'Medium');
+  const [status, setStatus] = useState<'Pending' | 'In Progress' | 'Completed'>(initialTask?.status || 'Pending');
+  const [assignedTo, setAssignedTo] = useState(initialTask?.assignedTo || '');
 
   // Populate form when editing
   useEffect(() => {
-    if (isEditing && editingTask) {
-      setForm(editingTask);
+    if (initialTask) {
+      setTitle(initialTask.title);
+      setDescription(initialTask.description || '');
+      setDueDate(initialTask.dueDate || null);
+      setPriority(initialTask.priority || 'Medium');
+      setStatus(initialTask.status || 'Pending');
+      setAssignedTo(initialTask.assignedTo || '');
     }
-  }, [isEditing, editingTask]);
+  }, [initialTask]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'title') {
+      setTitle(value);
+    } else if (name === 'description') {
+      setDescription(value);
+    } else if (name === 'assignedTo') {
+      setAssignedTo(value);
+    }
   };
 
   const handleDateChange = (date: Date | null) => {
-    setForm((prev) => ({ ...prev, dueDate: date }));
+    setDueDate(date);
   };
 
-  const resetForm = () => {
-    setForm({
-      title: '',
-      description: '',
-      dueDate: null,
-      priority: 'Low',
-      status: 'Pending',
-      assignedTo: '',
-    });
+  const handlePriorityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPriority(e.target.value as 'Low' | 'Medium' | 'High');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatus(e.target.value as 'Pending' | 'In Progress' | 'Completed');
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Ensure title is not empty
-    if (!form.title.trim()) {
+    if (!title.trim()) {
       alert('Task title is required');
       return;
     }
     
-    if (isEditing && onUpdateTask) {
-      onUpdateTask(form);
-    } else {
-      await onAddTask(form);
-    }
-    
-    resetForm();
+    const newTask: Task = {
+      title: title,
+      description: description,
+      dueDate: dueDate,
+      priority: priority,
+      status: status,
+      assignedTo: assignedTo,
+    };
+
+    onSubmit(newTask);
   };
 
   const handleCancel = () => {
-    resetForm();
-    if (onCancelEdit) {
-      onCancelEdit();
-    }
+    // No resetForm needed as state is managed directly
   };
 
   return (
@@ -103,7 +92,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <input
           className="border rounded px-2 py-1"
           name="title"
-          value={form.title}
+          value={title}
           onChange={handleChange}
           required
         />
@@ -114,7 +103,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <textarea
           className="border rounded px-2 py-1"
           name="description"
-          value={form.description}
+          value={description}
           onChange={handleChange}
           rows={3}
           placeholder="Enter task description..."
@@ -125,7 +114,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <label className="font-medium">Due Date (Optional)</label>
         <DatePicker
           className="border rounded px-2 py-1"
-          selected={form.dueDate}
+          selected={dueDate}
           onChange={handleDateChange}
           dateFormat="yyyy-MM-dd"
           placeholderText="Select due date (optional)"
@@ -137,13 +126,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <label className="font-medium">Priority</label>
         <select
           className={`border rounded px-2 py-1 font-medium ${
-            form.priority === 'Low' ? 'bg-gray-200 text-gray-800' :
-            form.priority === 'Medium' ? 'bg-orange-200 text-orange-800' :
+            priority === 'Low' ? 'bg-gray-200 text-gray-800' :
+            priority === 'Medium' ? 'bg-orange-200 text-orange-800' :
             'bg-red-200 text-red-800'
           }`}
           name="priority"
-          value={form.priority}
-          onChange={handleChange}
+          value={priority}
+          onChange={handlePriorityChange}
         >
           <option value="Low" className="bg-gray-200 text-gray-800">Low</option>
           <option value="Medium" className="bg-orange-200 text-orange-800">Medium</option>
@@ -155,13 +144,13 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <label className="font-medium">Status</label>
         <select
           className={`border rounded px-2 py-1 font-medium ${
-            form.status === 'Pending' ? 'bg-yellow-200 text-yellow-800' :
-            form.status === 'In Progress' ? 'bg-blue-200 text-blue-800' :
+            status === 'Pending' ? 'bg-yellow-200 text-yellow-800' :
+            status === 'In Progress' ? 'bg-blue-200 text-blue-800' :
             'bg-green-200 text-green-800'
           }`}
           name="status"
-          value={form.status}
-          onChange={handleChange}
+          value={status}
+          onChange={handleStatusChange}
         >
           <option value="Pending" className="bg-yellow-200 text-yellow-800">Pending</option>
           <option value="In Progress" className="bg-blue-200 text-blue-800">In Progress</option>
@@ -174,7 +163,7 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <input
           className="border rounded px-2 py-1"
           name="assignedTo"
-          value={form.assignedTo}
+          value={assignedTo}
           onChange={handleChange}
           placeholder="Enter assignee name..."
         />
@@ -184,12 +173,12 @@ export const TaskForm: React.FC<TaskFormProps> = ({
         <button 
           type="submit" 
           className={`flex-1 px-4 py-2 rounded text-white transition-colors ${
-            isEditing ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
+            initialTask ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'
           }`}
         >
-          {isEditing ? 'Update Task' : 'Add Task'}
+          {initialTask ? 'Update Task' : 'Add Task'}
         </button>
-        {isEditing && (
+        {initialTask && (
           <button 
             type="button" 
             onClick={handleCancel}

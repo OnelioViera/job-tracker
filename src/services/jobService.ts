@@ -45,7 +45,7 @@ export class JobService {
     return result;
   }
 
-  static async updateJob(id: string, jobData: Partial<JobData>): Promise<IJob> {
+  static async updateJob(id: string, jobData: JobData): Promise<IJob> {
     const response = await fetch(`/api/jobs/${id}`, {
       method: 'PUT',
       headers: {
@@ -55,7 +55,8 @@ export class JobService {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to update job');
+      const errorData = await response.json() as { error: string };
+      throw new Error(errorData.error || 'Failed to update job');
     }
 
     return response.json();

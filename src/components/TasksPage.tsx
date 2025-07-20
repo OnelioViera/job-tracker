@@ -6,108 +6,68 @@ import { ITask } from '../models/Task';
 
 interface TasksPageProps {
   tasks: ITask[];
-  onAddTask: (task: Task) => Promise<ITask>;
+  onAddTask: (task: Task) => void;
   onDeleteTask: (taskId: string) => void;
-  onUpdateTask: (taskId: string, task: Task) => void;
-  onTaskUpdated?: (task: ITask) => void;
-  projectManagers: string[];
-  jobs: any[];
+  onEditTask: (taskId: string) => void;
 }
 
 export const TasksPage: React.FC<TasksPageProps> = ({ 
   tasks, 
   onAddTask, 
   onDeleteTask, 
-  onUpdateTask, 
-  onTaskUpdated,
-  projectManagers, 
-  jobs 
+  onEditTask 
 }) => {
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const handleAddTask = (task: Task) => {
+    onAddTask(task);
+    setIsModalOpen(false);
+  };
 
   const handleEditTask = (taskId: string) => {
     const task = tasks.find(t => t._id === taskId);
     if (task) {
-      // Convert ITask to Task interface
-      const taskForEdit: Task = {
+      setEditingTask({
         title: task.title,
         description: task.description || '',
-        dueDate: new Date(task.dueDate),
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
         priority: task.priority,
         status: task.status,
-        assignedTo: task.assignedTo || '',
-      };
-      setEditingTask(taskForEdit);
-      setEditingTaskId(taskId);
+        assignedTo: task.assignedTo || ''
+      });
       setIsModalOpen(true);
     }
-  };
-
-  const handleUpdateTask = (updatedTask: Task) => {
-    if (editingTaskId) {
-      onUpdateTask(editingTaskId, updatedTask);
-      setEditingTask(null);
-      setEditingTaskId(null);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTask(null);
-    setEditingTaskId(null);
-  };
-
-  const handleOpenAddModal = () => {
-    setEditingTask(null);
-    setEditingTaskId(null);
-    setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingTask(null);
-    setEditingTaskId(null);
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Manage Tasks</h2>
-        <p className="text-gray-600">Add new tasks and manage existing ones</p>
-      </div>
-      
-      <div className="mb-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
         <button
-          onClick={handleOpenAddModal}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
-          + Add New Task
+          Add Task
         </button>
       </div>
-      
-      <div>
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Task List</h3>
-        <TaskList 
-          tasks={tasks} 
-          onDeleteTask={onDeleteTask}
-          onEditTask={handleEditTask}
-          jobs={jobs}
-        />
-      </div>
 
+      <TaskList 
+        tasks={tasks} 
+        onDeleteTask={onDeleteTask} 
+        onEditTask={handleEditTask}
+      />
+      
       <TaskModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        isEditing={!!editingTask}
-        editingTask={editingTask}
-        editingTaskId={editingTaskId}
-        onAddTask={onAddTask}
-        onUpdateTask={handleUpdateTask}
-        onCancelEdit={handleCancelEdit}
-        projectManagers={projectManagers}
-        jobs={jobs}
-        onTaskUpdated={onTaskUpdated}
+        onSubmit={handleAddTask}
+        initialTask={editingTask || undefined}
       />
     </div>
   );

@@ -46,7 +46,7 @@ export async function GET(
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('GET /api/jobs/[id]: MongoDB connection failed, using mock data');
       const mockJob = mockJobs.find(job => job._id === id);
       if (!mockJob) {
@@ -107,7 +107,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   let id: string;
-  let body: any;
+  let body: Record<string, unknown> = {};
   try {
     const paramsResult = await params;
     id = paramsResult.id;
@@ -121,7 +121,7 @@ export async function PUT(
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('PUT /api/jobs/[id]: MongoDB connection failed, using mock data');
       const mockJob = mockJobs.find(job => job._id === id);
       if (!mockJob) {
@@ -158,13 +158,13 @@ export async function PUT(
     }
     
     // Convert date strings to Date objects
-    if (body.startDate) {
+    if (body.startDate && typeof body.startDate === 'string') {
       body.startDate = new Date(body.startDate);
     }
-    if (body.finishedDate) {
+    if (body.finishedDate && typeof body.finishedDate === 'string') {
       body.finishedDate = new Date(body.finishedDate);
     }
-    if (body.completedDate) {
+    if (body.completedDate && typeof body.completedDate === 'string') {
       body.completedDate = new Date(body.completedDate);
     }
 
@@ -215,7 +215,7 @@ export async function DELETE(
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('DELETE /api/jobs/[id]: MongoDB connection failed, using mock data');
       const mockJob = mockJobs.find(job => job._id === id);
       if (!mockJob) {

@@ -40,7 +40,7 @@ export async function GET() {
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('GET /api/tasks: MongoDB connection failed, using mock data');
       return NextResponse.json(mockTasks);
     }
@@ -62,11 +62,11 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  let body: any;
+  let body: Record<string, unknown> = {};
   try {
     console.log('API: Received POST request for task');
     body = await request.json();
-    console.log('API: Request body:', JSON.stringify(body, null, 2));
+    console.log('API: Request body:', body);
     
     // Try to connect to MongoDB with a timeout
     const connectionPromise = dbConnect();
@@ -76,32 +76,30 @@ export async function POST(request: NextRequest) {
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('POST /api/tasks: MongoDB connection failed, using mock data');
-      // Create a new mock task
-      const newMockTask = {
+      const newTask = {
         _id: Date.now().toString(),
         ...body,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      return NextResponse.json(newMockTask, { status: 201 });
+      return NextResponse.json(newTask, { status: 201 });
     }
     
     if (useMockData) {
       console.log('POST /api/tasks: Using mock data');
-      // Create a new mock task
-      const newMockTask = {
+      const newTask = {
         _id: Date.now().toString(),
         ...body,
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      return NextResponse.json(newMockTask, { status: 201 });
+      return NextResponse.json(newTask, { status: 201 });
     }
     
     // Convert date strings to Date objects
-    if (body.dueDate) {
+    if (body.dueDate && typeof body.dueDate === 'string') {
       body.dueDate = new Date(body.dueDate);
     }
 
@@ -110,18 +108,14 @@ export async function POST(request: NextRequest) {
     console.log('API: Created task:', task);
     return NextResponse.json(task, { status: 201 });
   } catch (error: any) {
-    console.error('API: Error creating task:', error);
-    if (error.errors) {
-      console.error('API: Validation errors:', JSON.stringify(error.errors, null, 2));
-    }
+    console.error('POST /api/tasks: Error creating task:', error);
     console.log('POST /api/tasks: Falling back to mock data due to error');
-    // Create a new mock task
-    const newMockTask = {
+    const newTask = {
       _id: Date.now().toString(),
       ...body,
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    return NextResponse.json(newMockTask, { status: 201 });
+    return NextResponse.json(newTask, { status: 201 });
   }
 } 

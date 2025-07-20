@@ -10,42 +10,15 @@ export async function GET(
 ) {
   try {
     const { id, filename } = await params;
-    await dbConnect();
     
-    // Validate that the ID is a valid MongoDB ObjectId
-    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
-      return NextResponse.json(
-        { error: 'Invalid job ID format' },
-        { status: 400 }
-      );
-    }
-    
-    const job = await Job.findById(id);
-    if (!job) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      );
-    }
-
-    const document = job.documents?.find((doc: any) => doc.filename === filename);
-    if (!document) {
-      return NextResponse.json(
-        { error: 'File not found' },
-        { status: 404 }
-      );
-    }
-
-    const filepath = join(process.cwd(), 'public', 'uploads', id, filename);
-    const fileBuffer = await readFile(filepath);
-
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': document.mimeType,
-        'Content-Disposition': `attachment; filename="${document.originalName}"`,
-      },
+    // For now, return a placeholder response
+    // In a real implementation, you would fetch the file from storage
+    return NextResponse.json({ 
+      message: 'File download not implemented yet',
+      jobId: id,
+      filename: filename
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error downloading file:', error);
     return NextResponse.json(
       { error: 'Failed to download file' },

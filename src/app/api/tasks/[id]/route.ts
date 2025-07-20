@@ -45,7 +45,7 @@ export async function GET(
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('GET /api/tasks/[id]: MongoDB connection failed, using mock data');
       const mockTask = mockTasks.find(task => task._id === id);
       if (!mockTask) {
@@ -106,7 +106,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   let id: string;
-  let body: any;
+  let body: Record<string, unknown> = {};
   try {
     const paramsResult = await params;
     id = paramsResult.id;
@@ -120,7 +120,7 @@ export async function PUT(
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('PUT /api/tasks/[id]: MongoDB connection failed, using mock data');
       const mockTask = mockTasks.find(task => task._id === id);
       if (!mockTask) {
@@ -157,7 +157,7 @@ export async function PUT(
     }
     
     // Convert date strings to Date objects
-    if (body.dueDate) {
+    if (body.dueDate && typeof body.dueDate === 'string') {
       body.dueDate = new Date(body.dueDate);
     }
 
@@ -208,7 +208,7 @@ export async function DELETE(
     
     try {
       await Promise.race([connectionPromise, timeoutPromise]);
-    } catch (error) {
+    } catch {
       console.log('DELETE /api/tasks/[id]: MongoDB connection failed, using mock data');
       const mockTask = mockTasks.find(task => task._id === id);
       if (!mockTask) {

@@ -6,10 +6,9 @@ interface TaskListProps {
   tasks: ITask[];
   onDeleteTask: (taskId: string) => void;
   onEditTask: (taskId: string) => void;
-  jobs: any[];
 }
 
-export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditTask, jobs }) => {
+export const TaskList: React.FC<TaskListProps> = ({ tasks, onDeleteTask, onEditTask }) => {
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; taskId: string | null; taskTitle: string }>({
     isOpen: false,
     taskId: null,

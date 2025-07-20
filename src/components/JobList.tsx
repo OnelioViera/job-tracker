@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Job } from './JobForm';
 import { ConfirmDialog } from './ConfirmDialog';
 import { JobDocuments } from './JobDocuments';
 import { IJob } from '../models/Job';

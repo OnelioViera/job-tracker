@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Job } from './JobForm';
 import { IJob } from '../models/Job';
+import { ITask } from '../models/Task';
 import { JobService } from '../services/jobService';
 
 interface DashboardProps {
   jobs: IJob[];
-  onAddJob: (job: Job) => void;
+  tasks: ITask[];
 }
 
 interface PDFModalProps {
@@ -97,7 +98,7 @@ const PDFModal: React.FC<PDFModalProps> = ({ isOpen, onClose, job }) => {
   );
 };
 
-export const Dashboard: React.FC<DashboardProps> = ({ jobs, onAddJob }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ jobs, tasks }) => {
   const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
   const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
 

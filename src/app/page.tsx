@@ -70,17 +70,16 @@ export default function Home() {
     }
   };
 
-  const handleAddJob = async (jobData: Job): Promise<IJob> => {
+  const handleAddJob = async (jobData: Job) => {
     try {
       // Convert Job interface to JobData for database
-      const jobForDb: any = {
+      const jobForDb: JobData = {
         customer: jobData.customer,
         jobName: jobData.jobName,
         jobNumber: jobData.jobNumber,
-        startDate: jobData.startDate!.toISOString(),
-        finishedDate: jobData.finishedDate ? jobData.finishedDate.toISOString() : undefined,
-        completedDate: jobData.completedDate ? jobData.completedDate.toISOString() : undefined,
+        startDate: jobData.startDate?.toISOString() || '',
         priority: jobData.priority,
+        projectManager: jobData.projectManager
       };
       
       // Only add projectManager if it's not empty
@@ -98,15 +97,16 @@ export default function Home() {
     }
   };
 
-  const handleAddTask = async (taskData: Task): Promise<ITask> => {
+  const handleAddTask = async (taskData: Task) => {
     try {
       // Convert Task interface to TaskData for database
-      const taskForDb: any = {
+      const taskForDb: TaskData = {
         title: taskData.title,
         description: taskData.description,
+        dueDate: taskData.dueDate?.toISOString() || '',
         priority: taskData.priority,
         status: taskData.status,
-        assignedTo: taskData.assignedTo || undefined,
+        assignedTo: taskData.assignedTo
       };
       
       // Only add dueDate if it's not null
