@@ -43,6 +43,11 @@ export async function POST(
     try {
       await dbConnect();
       console.log('Upload API: Database connected');
+      
+      // Test if Job model is working
+      console.log('Upload API: Testing Job model...');
+      const testJob = await Job.findOne().limit(1);
+      console.log('Upload API: Job model test result:', !!testJob);
     } catch (dbError) {
       console.error('Upload API: Database connection failed:', dbError);
       return NextResponse.json(
@@ -187,11 +192,16 @@ export async function POST(
     if (job) {
       console.log('Upload API: Files uploaded, updating job with documents');
       console.log('Upload API: Current job documents:', job.documents?.length || 0);
-      // Update job with new documents
-      job.documents = [...(job.documents || []), ...uploadedFiles];
-      console.log('Upload API: Updated job documents count:', job.documents.length);
-      await job.save();
-      console.log('Upload API: Job updated successfully in database');
+      try {
+        // Update job with new documents
+        job.documents = [...(job.documents || []), ...uploadedFiles];
+        console.log('Upload API: Updated job documents count:', job.documents.length);
+        await job.save();
+        console.log('Upload API: Job updated successfully in database');
+      } catch (saveError) {
+        console.error('Upload API: Error saving job:', saveError);
+        console.log('Upload API: Continuing without database update');
+      }
     } else {
       console.log('Upload API: Files uploaded for mock job, database not updated');
     }
