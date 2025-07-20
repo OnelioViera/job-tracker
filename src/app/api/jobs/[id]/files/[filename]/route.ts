@@ -37,7 +37,7 @@ export async function GET(
       
       if (job) {
         // Look for the file in the job's documents
-        const document = job.documents?.find((doc: any) => doc.filename === filename);
+        const document = job.documents?.find((doc: { filename: string; content?: string }) => doc.filename === filename);
         if (document && document.content) {
           console.log('File download: Found file in database');
           // Convert base64 content back to buffer
@@ -52,7 +52,7 @@ export async function GET(
           });
         }
       }
-    } catch (dbError) {
+    } catch {
       console.log('File download: Database lookup failed, trying filesystem');
     }
     
