@@ -174,7 +174,7 @@ export default function Home() {
         if (updatedJobData.startDate instanceof Date) {
           jobForDb.startDate = updatedJobData.startDate.toISOString();
         } else if (updatedJobData.startDate === null || updatedJobData.startDate === undefined) {
-          jobForDb.startDate = undefined; // Use undefined instead of null for startDate
+          jobForDb.startDate = null; // Send null instead of undefined for startDate
         } else if (updatedJobData.startDate !== undefined) {
           jobForDb.startDate = updatedJobData.startDate as string;
         }
