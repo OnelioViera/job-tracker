@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { IJob } from '../models/Job';
+import { sortJobsByStatus } from '../utils/jobSorting';
 
 interface StatsPageProps {
   jobs: IJob[];
@@ -13,6 +14,9 @@ export const StatsPage: React.FC<StatsPageProps> = ({ jobs }) => {
   const currentJobs = jobs.filter(job => !job.completedDate);
   const completedJobs = jobs.filter(job => job.completedDate);
   
+  // Sort jobs by status: Pending -> In Progress -> Completed
+  const sortedCompletedJobs = sortJobsByStatus(completedJobs);
+
   // Calculate statistics
   const totalJobs = jobs.length;
   const completionRate = totalJobs > 0 ? Math.round((completedJobs.length / totalJobs) * 100) : 0;
@@ -253,7 +257,7 @@ export const StatsPage: React.FC<StatsPageProps> = ({ jobs }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {completedJobs.slice(0, 5).map((job) => (
+                {sortedCompletedJobs.slice(0, 5).map((job) => (
                   <tr key={job._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{job.jobName}</div>

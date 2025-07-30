@@ -5,6 +5,7 @@ import { JobService } from '../services/jobService';
 import { Job } from './JobForm';
 import { JobModal } from './JobModal';
 import { ConfirmDialog } from './ConfirmDialog';
+import { sortJobsByStatus } from '../utils/jobSorting';
 
 interface DashboardProps {
   jobs: IJob[];
@@ -713,7 +714,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {jobs.map((job) => renderJobRow(job))}
+                    {sortJobsByStatus(jobs).map((job) => renderJobRow(job))}
                   </tbody>
                 </table>
               </div>

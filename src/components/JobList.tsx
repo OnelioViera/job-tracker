@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ConfirmDialog } from './ConfirmDialog';
 import { JobDocuments } from './JobDocuments';
 import { IJob } from '../models/Job';
+import { sortJobsByStatus } from '../utils/jobSorting';
 
 interface JobListProps {
   jobs: IJob[];
@@ -18,6 +19,9 @@ export const JobList: React.FC<JobListProps> = ({ jobs, onDeleteJob, onEditJob }
 
   const currentJobs = jobs.filter(job => !job.completedDate || job.completedDate === null);
   const completedJobs = jobs.filter(job => job.completedDate && job.completedDate !== null);
+
+  const sortedCurrentJobs = sortJobsByStatus(currentJobs);
+  const sortedCompletedJobs = sortJobsByStatus(completedJobs);
 
   const handleDeleteClick = (jobId: string, jobName: string) => {
     setDeleteConfirm({
@@ -116,8 +120,8 @@ export const JobList: React.FC<JobListProps> = ({ jobs, onDeleteJob, onEditJob }
 
   return (
     <div className="mt-8 w-full">
-      {renderJobTable(currentJobs, 'Current Jobs')}
-      {renderJobTable(completedJobs, 'Completed Jobs', true)}
+      {renderJobTable(sortedCurrentJobs, 'Current Jobs')}
+      {renderJobTable(sortedCompletedJobs, 'Completed Jobs', true)}
       
       <ConfirmDialog
         isOpen={deleteConfirm.isOpen}
