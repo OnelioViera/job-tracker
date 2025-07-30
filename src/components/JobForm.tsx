@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import ProjectManagerSelect from './ProjectManagerSelect';
 import { IJob } from '../models/Job';
@@ -10,9 +9,6 @@ export interface Job {
   jobName: string;
   jobNumber: string;
   projectManager?: string;
-  startDate: Date | null;
-  finishedDate: Date | null;
-  completedDate: Date | null;
   priority: 'High' | 'Medium' | 'Low';
 }
 
@@ -46,9 +42,6 @@ export const JobForm: React.FC<JobFormProps> = ({
     jobName: '',
     jobNumber: '',
     projectManager: '',
-    startDate: null,
-    finishedDate: null,
-    completedDate: null,
     priority: 'Low',
   });
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -66,10 +59,6 @@ export const JobForm: React.FC<JobFormProps> = ({
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (name: keyof Job, date: Date | null) => {
-    setForm((prev) => ({ ...prev, [name]: date }));
-  };
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const pdfFiles = files.filter(file => file.type === 'application/pdf');
@@ -82,9 +71,6 @@ export const JobForm: React.FC<JobFormProps> = ({
       jobName: '',
       jobNumber: '',
       projectManager: '',
-      startDate: null,
-      finishedDate: null,
-      completedDate: null,
       priority: 'Low',
     });
     setSelectedFiles([]);
@@ -92,12 +78,6 @@ export const JobForm: React.FC<JobFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Ensure startDate is not null before submitting
-    if (!form.startDate) {
-      alert('Start date is required');
-      return;
-    }
     
     // Ensure project manager is selected when editing
     if (isEditing && (!form.projectManager || form.projectManager.trim() === '')) {
@@ -250,37 +230,6 @@ export const JobForm: React.FC<JobFormProps> = ({
         onDeleteProjectManager={onDeleteProjectManager}
         isEditing={isEditing}
       />
-      <div className="flex flex-col gap-1">
-        <label className="font-medium">Start Date</label>
-        <DatePicker
-          className="border rounded px-2 py-1"
-          selected={form.startDate}
-          onChange={(date) => handleDateChange('startDate', date)}
-          dateFormat="yyyy-MM-dd"
-          placeholderText="Select start date"
-          required
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label className="font-medium">Finished Date (Optional)</label>
-        <DatePicker
-          className="border rounded px-2 py-1"
-          selected={form.finishedDate}
-          onChange={(date) => handleDateChange('finishedDate', date)}
-          dateFormat="yyyy-MM-dd"
-          placeholderText="Select finished date"
-        />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label className="font-medium">Completed Date (Optional)</label>
-        <DatePicker
-          className="border rounded px-2 py-1"
-          selected={form.completedDate}
-          onChange={(date) => handleDateChange('completedDate', date)}
-          dateFormat="yyyy-MM-dd"
-          placeholderText="Select completed date"
-        />
-      </div>
       <div className="flex flex-col gap-1">
         <label className="font-medium">Priority (Optional)</label>
         <select

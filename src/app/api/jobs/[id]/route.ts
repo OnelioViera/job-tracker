@@ -96,21 +96,37 @@ export async function PUT(
       );
     }
     
-    // Convert date strings to Date objects
-    if (body.startDate && typeof body.startDate === 'string') {
-      body.startDate = new Date(body.startDate);
+    // Convert date strings to Date objects or handle null/undefined values
+    if (body.startDate !== undefined) {
+      if (body.startDate && typeof body.startDate === 'string') {
+        body.startDate = new Date(body.startDate);
+      } else if (body.startDate === null || body.startDate === undefined) {
+        body.startDate = null;
+      }
     }
-    if (body.finishedDate && typeof body.finishedDate === 'string') {
-      body.finishedDate = new Date(body.finishedDate);
+    if (body.finishedDate !== undefined) {
+      if (body.finishedDate && typeof body.finishedDate === 'string') {
+        body.finishedDate = new Date(body.finishedDate);
+      } else if (body.finishedDate === null || body.finishedDate === undefined) {
+        body.finishedDate = null;
+      }
     }
-    if (body.completedDate && typeof body.completedDate === 'string') {
-      body.completedDate = new Date(body.completedDate);
+    if (body.completedDate !== undefined) {
+      if (body.completedDate && typeof body.completedDate === 'string') {
+        body.completedDate = new Date(body.completedDate);
+      } else if (body.completedDate === null || body.completedDate === undefined) {
+        body.completedDate = null;
+      }
     }
+
+    console.log('PUT /api/jobs/[id]: Original job data:', job);
+    console.log('PUT /api/jobs/[id]: Update data:', body);
 
     // Update the job
     Object.assign(job, body);
     await job.save();
     
+    console.log('PUT /api/jobs/[id]: Updated job data:', job);
     console.log('PUT /api/jobs/[id]: Job updated successfully');
     return NextResponse.json(job);
   } catch (error) {

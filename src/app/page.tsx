@@ -5,7 +5,6 @@ import { Job } from '../components/JobForm';
 import { Task } from '../components/TaskForm';
 import { Navbar } from '../components/Navbar';
 import { Dashboard } from '../components/Dashboard';
-import { JobsPage } from '../components/JobsPage';
 import { TasksPage } from '../components/TasksPage';
 import { StatsPage } from '../components/StatsPage';
 import { JobService, JobData } from '../services/jobService';
@@ -77,7 +76,6 @@ export default function Home() {
         customer: jobData.customer,
         jobName: jobData.jobName,
         jobNumber: jobData.jobNumber,
-        startDate: jobData.startDate?.toISOString() || '',
         priority: jobData.priority,
         projectManager: jobData.projectManager
       };
@@ -153,9 +151,12 @@ export default function Home() {
     }
   };
 
-  const handleUpdateJob = async (jobId: string, updatedJobData: Partial<Job>) => {
+  const handleUpdateJob = async (jobId: string, updatedJobData: Partial<IJob>) => {
     try {
-      // Convert Job interface to JobData for database
+      console.log('Main page: handleUpdateJob called with jobId:', jobId);
+      console.log('Main page: updatedJobData:', updatedJobData);
+      
+      // Convert IJob interface to JobData for database
       const jobForDb: Partial<JobData> = {};
       if (updatedJobData.customer !== undefined) jobForDb.customer = updatedJobData.customer;
       if (updatedJobData.jobName !== undefined) jobForDb.jobName = updatedJobData.jobName;
@@ -170,27 +171,53 @@ export default function Home() {
         }
       }
       if (updatedJobData.startDate !== undefined) {
-        jobForDb.startDate = updatedJobData.startDate instanceof Date 
-          ? updatedJobData.startDate.toISOString() 
-          : (updatedJobData.startDate === null ? undefined : updatedJobData.startDate as string);
+        if (updatedJobData.startDate instanceof Date) {
+          jobForDb.startDate = updatedJobData.startDate.toISOString();
+        } else if (updatedJobData.startDate === null || updatedJobData.startDate === undefined) {
+          jobForDb.startDate = undefined; // Use undefined instead of null for startDate
+        } else if (updatedJobData.startDate !== undefined) {
+          jobForDb.startDate = updatedJobData.startDate as string;
+        }
       }
       if (updatedJobData.finishedDate !== undefined) {
-        jobForDb.finishedDate = updatedJobData.finishedDate instanceof Date 
-          ? updatedJobData.finishedDate.toISOString() 
-          : (updatedJobData.finishedDate === null ? undefined : updatedJobData.finishedDate as string);
+        if (updatedJobData.finishedDate instanceof Date) {
+          jobForDb.finishedDate = updatedJobData.finishedDate.toISOString();
+        } else if (updatedJobData.finishedDate === null || updatedJobData.finishedDate === undefined) {
+          jobForDb.finishedDate = null; // Send null instead of empty string
+        } else if (updatedJobData.finishedDate !== undefined) {
+          jobForDb.finishedDate = updatedJobData.finishedDate as string;
+        }
       }
       if (updatedJobData.completedDate !== undefined) {
-        jobForDb.completedDate = updatedJobData.completedDate instanceof Date 
-          ? updatedJobData.completedDate.toISOString() 
-          : (updatedJobData.completedDate === null ? undefined : updatedJobData.completedDate as string);
+        if (updatedJobData.completedDate instanceof Date) {
+          jobForDb.completedDate = updatedJobData.completedDate.toISOString();
+        } else if (updatedJobData.completedDate === null || updatedJobData.completedDate === undefined) {
+          jobForDb.completedDate = null; // Send null instead of empty string
+        } else if (updatedJobData.completedDate !== undefined) {
+          jobForDb.completedDate = updatedJobData.completedDate as string;
+        }
       }
       if (updatedJobData.priority !== undefined) jobForDb.priority = updatedJobData.priority;
       
+      console.log('Main page: jobForDb to send to API:', jobForDb);
+      
       const updatedJob = await JobService.updateJob(jobId, jobForDb);
-      setJobs((prev) => prev.map((job) => job._id === jobId ? updatedJob : job));
+      console.log('Main page: API returned updated job:', updatedJob);
+      
+      // Update the jobs state with the new data
+      setJobs((prev) => {
+        console.log('Main page: Previous jobs state:', prev);
+        const newJobs = prev.map((job) => job._id === jobId ? updatedJob : job);
+        console.log('Main page: Updated jobs list:', newJobs);
+        console.log('Main page: Updated job details:', newJobs.find(job => job._id === jobId));
+        return newJobs;
+      });
+      
+      return updatedJob; // Return the updated job for the caller
     } catch (err) {
       setError('Failed to update job');
       console.error('Error updating job:', err);
+      throw err; // Re-throw the error so the modal can handle it
     }
   };
 
@@ -240,15 +267,12 @@ export default function Home() {
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
       
       {activeTab === 'dashboard' && (
-        <Dashboard jobs={jobs} tasks={tasks} />
-      )}
-      
-      {activeTab === 'jobs' && (
-        <JobsPage 
+        <Dashboard 
           jobs={jobs} 
-          onAddJob={handleAddJob} 
-          onDeleteJob={handleDeleteJob}
+          tasks={tasks} 
           onUpdateJob={handleUpdateJob}
+          onAddJob={handleAddJob}
+          onDeleteJob={handleDeleteJob}
           onJobUpdated={handleJobUpdated}
           projectManagers={projectManagers}
           onAddProjectManager={handleAddProjectManager}

@@ -16,8 +16,8 @@ export const JobList: React.FC<JobListProps> = ({ jobs, onDeleteJob, onEditJob }
     jobName: ''
   });
 
-  const currentJobs = jobs.filter(job => !job.completedDate);
-  const completedJobs = jobs.filter(job => job.completedDate);
+  const currentJobs = jobs.filter(job => !job.completedDate || job.completedDate === null);
+  const completedJobs = jobs.filter(job => job.completedDate && job.completedDate !== null);
 
   const handleDeleteClick = (jobId: string, jobName: string) => {
     setDeleteConfirm({
@@ -49,32 +49,30 @@ export const JobList: React.FC<JobListProps> = ({ jobs, onDeleteJob, onEditJob }
     return (
       <div className="mb-8">
         <h4 className="text-lg font-semibold text-gray-900 mb-4">{title}</h4>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="w-full">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border px-2 py-1">Customer</th>
-                <th className="border px-2 py-1">Job Name</th>
-                <th className="border px-2 py-1">Job #</th>
-                <th className="border px-2 py-1">Project Manager</th>
-                <th className="border px-2 py-1">Start Date</th>
-                <th className="border px-2 py-1">Finished Date</th>
-                <th className="border px-2 py-1">Completed Date</th>
-                <th className="border px-2 py-1">Priority</th>
-                <th className="border px-2 py-1">Documents</th>
-                <th className="border px-2 py-1">Actions</th>
+                <th className="border px-2 py-1 w-1/9">Customer</th>
+                <th className="border px-2 py-1 w-2/9">Job Name</th>
+                <th className="border px-2 py-1 w-1/9">Job #</th>
+                <th className="border px-2 py-1 w-1/9">Project Manager</th>
+                <th className="border px-2 py-1 w-1/9">Start Date</th>
+                <th className="border px-2 py-1 w-1/9">Completed Date</th>
+                <th className="border px-2 py-1 w-1/9">Priority</th>
+                <th className="border px-2 py-1 w-1/9">Documents</th>
+                <th className="border px-2 py-1 w-1/9">Actions</th>
               </tr>
             </thead>
             <tbody>
               {jobList.map((job) => (
                 <tr key={job._id} className={`even:bg-gray-50 ${isCompleted ? 'opacity-75' : ''}`}>
-                  <td className="border px-2 py-1">{job.customer}</td>
-                  <td className="border px-2 py-1">{job.jobName}</td>
-                  <td className="border px-2 py-1">{job.jobNumber}</td>
-                  <td className="border px-2 py-1">{job.projectManager || 'Not assigned'}</td>
-                  <td className="border px-2 py-1">{job.startDate ? new Date(job.startDate).toLocaleDateString() : ''}</td>
-                  <td className="border px-2 py-1">{job.finishedDate ? new Date(job.finishedDate).toLocaleDateString() : ''}</td>
-                  <td className="border px-2 py-1">{job.completedDate ? new Date(job.completedDate).toLocaleDateString() : ''}</td>
+                  <td className="border px-2 py-1 truncate">{job.customer}</td>
+                  <td className="border px-2 py-1 truncate">{job.jobName}</td>
+                  <td className="border px-2 py-1 truncate">{job.jobNumber}</td>
+                  <td className="border px-2 py-1 truncate">{job.projectManager || 'Not assigned'}</td>
+                  <td className="border px-2 py-1 truncate">{job.startDate && job.startDate !== null ? new Date(job.startDate).toLocaleDateString() : ''}</td>
+                  <td className="border px-2 py-1 truncate">{job.completedDate && job.completedDate !== null ? new Date(job.completedDate).toLocaleDateString() : ''}</td>
                   <td className="border px-2 py-1 font-bold">
                     <span className={
                       job.priority === 'High' ? 'text-red-700' : job.priority === 'Medium' ? 'text-yellow-800' : 'text-green-800'
@@ -117,7 +115,7 @@ export const JobList: React.FC<JobListProps> = ({ jobs, onDeleteJob, onEditJob }
   }
 
   return (
-    <div className="mt-8 w-full max-w-6xl">
+    <div className="mt-8 w-full">
       {renderJobTable(currentJobs, 'Current Jobs')}
       {renderJobTable(completedJobs, 'Completed Jobs', true)}
       
