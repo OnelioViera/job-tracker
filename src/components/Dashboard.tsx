@@ -277,7 +277,7 @@ const ProgressEditModal: React.FC<ProgressEditModalProps> = ({ isOpen, onClose, 
                 isUpdating ? 'cursor-not-allowed opacity-50' : ''
               }`}
             >
-              {updateSuccess ? 'Close' : 'Cancel'}
+              {updateSuccess ? 'Close' : 'Done'}
             </button>
           </div>
         </div>
@@ -404,10 +404,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Categorize jobs for statistics
   const inProgressJobs = jobs.filter(job => (job.startDate && job.startDate !== null) && (!job.completedDate || job.completedDate === null));
-  const completedJobs = jobs.filter(job => job.completedDate && job.completedDate !== null);
+  const completedJobsForStats = jobs.filter(job => job.completedDate && job.completedDate !== null);
   
   const totalJobs = jobs.length;
-  const completedJobsCount = completedJobs.length;
+  const completedJobsCount = completedJobsForStats.length;
   const highPriorityJobs = jobs.filter(job => job.priority === 'High' && !job.completedDate).length;
   const inProgressJobsCount = inProgressJobs.length;
 
@@ -624,6 +624,47 @@ export const Dashboard: React.FC<DashboardProps> = ({
     </tr>
   );
 
+  // Separate jobs into active and completed
+  const activeJobs = jobs.filter(job => !job.completedDate || job.completedDate === null);
+  const completedJobs = jobs.filter(job => job.completedDate && job.completedDate !== null);
+
+  const renderJobTable = (jobsToRender: IJob[], title: string, emptyMessage: string) => (
+    <div className="bg-white rounded-lg shadow border overflow-hidden">
+      <div className="px-6 py-4 border-b bg-gray-50">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+      </div>
+      <div className="overflow-x-auto">
+        {jobsToRender.length > 0 ? (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Manager</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {sortJobsByStatus(jobsToRender).map((job) => renderJobRow(job))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="px-6 py-8 text-center">
+            <div className="text-gray-400 mb-2">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <p className="text-gray-500">{emptyMessage}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -699,25 +740,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 + Add New Job
               </button>
             </div>
-            <div className="bg-white rounded-lg shadow border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Manager</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {sortJobsByStatus(jobs).map((job) => renderJobRow(job))}
-                  </tbody>
-                </table>
-              </div>
+            
+            {/* Active Jobs Section */}
+            <div className="mb-8">
+              {renderJobTable(
+                activeJobs, 
+                `Active Jobs (${activeJobs.length})`, 
+                "No active jobs found. Add a new job to get started!"
+              )}
+            </div>
+
+            {/* Completed Jobs Section */}
+            <div>
+              {renderJobTable(
+                completedJobs, 
+                `Completed Jobs (${completedJobs.length})`, 
+                "No completed jobs yet. Jobs will appear here once marked as completed."
+              )}
             </div>
           </div>
         </div>
