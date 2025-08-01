@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Job } from '../components/JobForm';
 import { Task } from '../components/TaskForm';
 import { Navbar } from '../components/Navbar';
@@ -12,7 +13,9 @@ import { TaskService, TaskData } from '../services/taskService';
 import { IJob } from '../models/Job';
 import { ITask } from '../models/Task';
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [jobs, setJobs] = useState<IJob[]>([]);
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,6 +29,23 @@ export default function Home() {
     loadTasks();
     loadProjectManagers();
   }, []);
+
+  // Handle URL parameters for tab navigation
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['dashboard', 'tasks', 'stats'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'dashboard') {
+      router.push('/');
+    } else {
+      router.push(`/?tab=${tab}`);
+    }
+  };
 
   const loadJobs = async () => {
     try {
@@ -179,6 +199,15 @@ export default function Home() {
           jobForDb.startDate = updatedJobData.startDate as string;
         }
       }
+      if (updatedJobData.waitingSubmittalDate !== undefined) {
+        if (updatedJobData.waitingSubmittalDate instanceof Date) {
+          jobForDb.waitingSubmittalDate = updatedJobData.waitingSubmittalDate.toISOString();
+        } else if (updatedJobData.waitingSubmittalDate === null || updatedJobData.waitingSubmittalDate === undefined) {
+          jobForDb.waitingSubmittalDate = null;
+        } else if (updatedJobData.waitingSubmittalDate !== undefined) {
+          jobForDb.waitingSubmittalDate = updatedJobData.waitingSubmittalDate as string;
+        }
+      }
       if (updatedJobData.finishedDate !== undefined) {
         if (updatedJobData.finishedDate instanceof Date) {
           jobForDb.finishedDate = updatedJobData.finishedDate.toISOString();
@@ -264,7 +293,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
       
       {activeTab === 'dashboard' && (
         <Dashboard 
@@ -296,5 +325,13 @@ export default function Home() {
         <StatsPage jobs={jobs} />
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

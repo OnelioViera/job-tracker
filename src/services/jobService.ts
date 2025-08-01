@@ -6,6 +6,7 @@ export interface JobData {
   jobNumber: string;
   projectManager?: string;
   startDate?: string | null;
+  waitingSubmittalDate?: string | null;
   finishedDate?: string | null;
   completedDate?: string | null;
   priority: 'High' | 'Medium' | 'Low';

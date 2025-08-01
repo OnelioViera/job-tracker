@@ -102,6 +102,9 @@ export async function POST(request: NextRequest) {
     if (body.startDate && typeof body.startDate === 'string') {
       body.startDate = new Date(body.startDate);
     }
+    if (body.waitingSubmittalDate && typeof body.waitingSubmittalDate === 'string') {
+      body.waitingSubmittalDate = new Date(body.waitingSubmittalDate);
+    }
     if (body.finishedDate && typeof body.finishedDate === 'string') {
       body.finishedDate = new Date(body.finishedDate);
     }

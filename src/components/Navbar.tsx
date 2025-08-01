@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface NavbarProps {
   activeTab: string;
@@ -55,6 +56,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange }) => {
             >
               Stats
             </button>
+            <Link
+              href="/completed"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              Completed Jobs
+            </Link>
           </div>
         </div>
       </div>

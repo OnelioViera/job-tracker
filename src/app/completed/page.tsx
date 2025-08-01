@@ -1,29 +1,12 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
-import { IJob } from '../models/Job';
-import { ITask } from '../models/Task';
-import { JobService } from '../services/jobService';
-import { Job } from './JobForm';
-import { JobModal } from './JobModal';
-import { ConfirmDialog } from './ConfirmDialog';
-import { sortJobsByStatus } from '../utils/jobSorting';
-
-interface DashboardProps {
-  jobs: IJob[];
-  tasks: ITask[];
-  onUpdateJob?: (jobId: string, updatedJobData: Partial<IJob>) => Promise<IJob>;
-  onAddJob?: (job: Job) => Promise<IJob>;
-  onDeleteJob?: (jobId: string) => void;
-  onJobUpdated?: (job: IJob) => void;
-  projectManagers?: string[];
-  onAddProjectManager?: (manager: string) => void;
-  onDeleteProjectManager?: (manager: string) => void;
-}
-
-interface PDFModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  job: IJob | null;
-}
+import { IJob } from '../../models/Job';
+import { JobService, JobData } from '../../services/jobService';
+import { JobModal } from '../../components/JobModal';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { sortJobsByStatus } from '../../utils/jobSorting';
+import { Job } from '../../components/JobForm';
 
 interface ProgressEditModalProps {
   isOpen: boolean;
@@ -37,10 +20,6 @@ const ProgressEditModal: React.FC<ProgressEditModalProps> = ({ isOpen, onClose, 
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [currentJob, setCurrentJob] = useState<IJob | null>(null);
 
-  console.log('ProgressEditModal: Rendering with job:', job);
-  console.log('ProgressEditModal: isOpen:', isOpen);
-
-  // Update currentJob when job prop changes
   useEffect(() => {
     if (job) {
       setCurrentJob(job);
@@ -57,10 +36,7 @@ const ProgressEditModal: React.FC<ProgressEditModalProps> = ({ isOpen, onClose, 
   };
 
   const handleStatusUpdate = async (status: 'pending' | 'inProgress' | 'waitingSubmittal' | 'completed') => {
-    if (isUpdating) return; // Prevent multiple clicks
-    
-    console.log('ProgressEditModal: handleStatusUpdate called with status:', status);
-    console.log('ProgressEditModal: Current job:', currentJob);
+    if (isUpdating) return;
     
     setIsUpdating(true);
     setUpdateSuccess(false);
@@ -69,83 +45,56 @@ const ProgressEditModal: React.FC<ProgressEditModalProps> = ({ isOpen, onClose, 
     
     switch (status) {
       case 'pending':
-        // Clear all dates
         updatedData.startDate = null;
         updatedData.waitingSubmittalDate = null;
         updatedData.completedDate = null;
         break;
       case 'inProgress':
-        // Set start date to today if not already set, clear other dates
         updatedData.startDate = new Date();
         updatedData.waitingSubmittalDate = null;
         updatedData.completedDate = null;
         break;
       case 'waitingSubmittal':
-        // Set start date if not already set, set waiting submittal date, clear completed date
         updatedData.startDate = currentJob.startDate || new Date();
         updatedData.waitingSubmittalDate = new Date();
         updatedData.completedDate = null;
         break;
       case 'completed':
-        // Set all dates appropriately
         updatedData.startDate = currentJob.startDate || new Date();
         updatedData.waitingSubmittalDate = currentJob.waitingSubmittalDate || new Date();
         updatedData.completedDate = new Date();
         break;
     }
     
-    console.log('ProgressEditModal: Updated data to send:', updatedData);
-    
     try {
       if (onUpdateJob) {
         const result = await onUpdateJob(currentJob._id!, updatedData);
-        console.log('ProgressEditModal: onUpdateJob completed successfully', result);
-        
-        // Update the current job with the result
         if (result) {
           setCurrentJob(result);
         }
-        
-        // Show success state
         setIsUpdating(false);
         setUpdateSuccess(true);
-        // Don't close the modal immediately - let the user see the change
-        // onClose(); // Removed immediate close
       } else {
-        console.log('ProgressEditModal: onUpdateJob is undefined');
         setIsUpdating(false);
         onClose();
       }
     } catch (error) {
-      console.error('ProgressEditModal: Error updating job:', error);
+      console.error('Error updating job:', error);
       setIsUpdating(false);
       onClose();
     }
   };
 
   const getCurrentStatus = () => {
-    console.log('Dashboard: getCurrentStatus called for job:', currentJob);
-    console.log('Dashboard: job.startDate:', currentJob.startDate);
-    console.log('Dashboard: job.waitingSubmittalDate:', currentJob.waitingSubmittalDate);
-    console.log('Dashboard: job.completedDate:', currentJob.completedDate);
-    
-    // Check for completed status first (has completedDate)
     if (currentJob.completedDate && currentJob.completedDate !== null) {
-      console.log('Dashboard: Status is completed');
       return 'completed';
     }
-    // Check for waiting submittal status (has waitingSubmittalDate but no completedDate)
     if (currentJob.waitingSubmittalDate && currentJob.waitingSubmittalDate !== null) {
-      console.log('Dashboard: Status is waitingSubmittal');
       return 'waitingSubmittal';
     }
-    // Check for in progress status (has startDate but no waitingSubmittalDate or completedDate)
     if (currentJob.startDate && currentJob.startDate !== null) {
-      console.log('Dashboard: Status is inProgress');
       return 'inProgress';
     }
-    // Default to pending (no startDate, waitingSubmittalDate, or completedDate)
-    console.log('Dashboard: Status is pending');
     return 'pending';
   };
 
@@ -332,141 +281,111 @@ const ProgressEditModal: React.FC<ProgressEditModalProps> = ({ isOpen, onClose, 
   );
 };
 
-const PDFModal: React.FC<PDFModalProps> = ({ isOpen, onClose, job }) => {
-  if (!isOpen || !job) return null;
-
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  const handleDownload = (filename: string, originalName: string) => {
-    const downloadUrl = JobService.getFileDownloadUrl(job._id!, filename);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = originalName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      onClick={handleBackdropClick}
-    >
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-xl font-bold text-gray-900">
-            PDF Documents - {job.jobName}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-          >
-            ×
-          </button>
-        </div>
-        
-        <div className="p-6">
-          {job.documents && job.documents.length > 0 ? (
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600 mb-4">
-                {job.documents.length} document{job.documents.length !== 1 ? 's' : ''} uploaded
-              </p>
-              {job.documents.map((doc, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-red-100 rounded-lg">
-                      <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{doc.originalName}</p>
-                      <p className="text-xs text-gray-500">
-                        {(doc.size / 1024).toFixed(1)} KB • Uploaded {new Date(doc.uploadedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownload(doc.filename, doc.originalName)}
-                    className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                  >
-                    Download
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <div className="p-4 bg-gray-100 rounded-lg inline-block mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
-              <p className="text-gray-500">No PDF documents uploaded for this job</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export const Dashboard: React.FC<DashboardProps> = ({ 
-  jobs, 
-  onUpdateJob,
-  onAddJob,
-  onDeleteJob,
-  onJobUpdated,
-  projectManagers = [],
-  onAddProjectManager,
-  onDeleteProjectManager
-}) => {
-  const [selectedJob, setSelectedJob] = useState<IJob | null>(null);
-  const [isPDFModalOpen, setIsPDFModalOpen] = useState(false);
-  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+export default function CompletedJobsPage() {
+  const [jobs, setJobs] = useState<IJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editingJob, setEditingJob] = useState<IJob | null>(null);
-  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [editingJobForModal, setEditingJobForModal] = useState<Job | null>(null);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [isJobModalOpen, setIsJobModalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; jobId: string | null; jobName: string }>({
     isOpen: false,
     jobId: null,
     jobName: ''
   });
 
-  // Update editingJob when jobs array changes
-  // useEffect(() => {
-  //   if (editingJob && jobs.length > 0) {
-  //     const updatedJob = jobs.find(job => job._id === editingJob._id);
-  //     if (updatedJob) {
-  //       setEditingJob(updatedJob);
-  //     }
-  //   }
-  // }, [jobs, editingJob]);
+  useEffect(() => {
+    loadJobs();
+  }, []);
 
-  // Categorize jobs for statistics - only include active jobs (not completed)
-  const activeJobs = jobs.filter(job => !job.completedDate || job.completedDate === null);
-  const inProgressJobs = activeJobs.filter(job => (job.startDate && job.startDate !== null) && (!job.waitingSubmittalDate || job.waitingSubmittalDate === null));
-  const waitingSubmittalJobs = activeJobs.filter(job => job.waitingSubmittalDate && job.waitingSubmittalDate !== null);
-  const completedJobsForStats = jobs.filter(job => job.completedDate && job.completedDate !== null);
-  
-  const totalJobs = jobs.length;
-  const completedJobsCount = completedJobsForStats.length;
-  const inProgressJobsCount = inProgressJobs.length;
-  const waitingSubmittalJobsCount = waitingSubmittalJobs.length;
-
-  const handleViewPDFs = (job: IJob) => {
-    setSelectedJob(job);
-    setIsPDFModalOpen(true);
+  const loadJobs = async () => {
+    try {
+      setLoading(true);
+      const fetchedJobs = await JobService.getAllJobs();
+      // Filter to only show completed jobs
+      const completedJobs = fetchedJobs.filter(job => job.completedDate && job.completedDate !== null);
+      setJobs(completedJobs);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load completed jobs');
+      console.error('Error loading completed jobs:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleClosePDFModal = () => {
-    setIsPDFModalOpen(false);
-    setSelectedJob(null);
+  const handleUpdateJob = async (jobId: string, updatedJobData: Partial<IJob>) => {
+    try {
+      // Convert IJob interface to JobData for database
+      const jobForDb: Partial<JobData> = {};
+      if (updatedJobData.customer !== undefined) jobForDb.customer = updatedJobData.customer;
+      if (updatedJobData.jobName !== undefined) jobForDb.jobName = updatedJobData.jobName;
+      if (updatedJobData.jobNumber !== undefined) jobForDb.jobNumber = updatedJobData.jobNumber;
+      if (updatedJobData.projectManager !== undefined) {
+        if (updatedJobData.projectManager && updatedJobData.projectManager.trim() !== '') {
+          jobForDb.projectManager = updatedJobData.projectManager;
+        } else {
+          jobForDb.projectManager = undefined;
+        }
+      }
+      if (updatedJobData.startDate !== undefined) {
+        if (updatedJobData.startDate instanceof Date) {
+          jobForDb.startDate = updatedJobData.startDate.toISOString();
+        } else if (updatedJobData.startDate === null || updatedJobData.startDate === undefined) {
+          jobForDb.startDate = null;
+        } else if (updatedJobData.startDate !== undefined) {
+          jobForDb.startDate = updatedJobData.startDate as string;
+        }
+      }
+      if (updatedJobData.waitingSubmittalDate !== undefined) {
+        if (updatedJobData.waitingSubmittalDate instanceof Date) {
+          jobForDb.waitingSubmittalDate = updatedJobData.waitingSubmittalDate.toISOString();
+        } else if (updatedJobData.waitingSubmittalDate === null || updatedJobData.waitingSubmittalDate === undefined) {
+          jobForDb.waitingSubmittalDate = null;
+        } else if (updatedJobData.waitingSubmittalDate !== undefined) {
+          jobForDb.waitingSubmittalDate = updatedJobData.waitingSubmittalDate as string;
+        }
+      }
+      if (updatedJobData.finishedDate !== undefined) {
+        if (updatedJobData.finishedDate instanceof Date) {
+          jobForDb.finishedDate = updatedJobData.finishedDate.toISOString();
+        } else if (updatedJobData.finishedDate === null || updatedJobData.finishedDate === undefined) {
+          jobForDb.finishedDate = null;
+        } else if (updatedJobData.finishedDate !== undefined) {
+          jobForDb.finishedDate = updatedJobData.finishedDate as string;
+        }
+      }
+      if (updatedJobData.completedDate !== undefined) {
+        if (updatedJobData.completedDate instanceof Date) {
+          jobForDb.completedDate = updatedJobData.completedDate.toISOString();
+        } else if (updatedJobData.completedDate === null || updatedJobData.completedDate === undefined) {
+          jobForDb.completedDate = null;
+        } else if (updatedJobData.completedDate !== undefined) {
+          jobForDb.completedDate = updatedJobData.completedDate as string;
+        }
+      }
+      if (updatedJobData.priority !== undefined) jobForDb.priority = updatedJobData.priority;
+
+      const updatedJob = await JobService.updateJob(jobId, jobForDb);
+      setJobs((prev) => prev.map((job) => job._id === jobId ? updatedJob : job));
+      return updatedJob;
+    } catch (err) {
+      setError('Failed to update job');
+      console.error('Error updating job:', err);
+      throw err;
+    }
+  };
+
+  const handleDeleteJob = async (jobId: string) => {
+    try {
+      await JobService.deleteJob(jobId);
+      setJobs((prev) => prev.filter((job) => job._id !== jobId));
+    } catch (err) {
+      setError('Failed to delete job');
+      console.error('Error deleting job:', err);
+    }
   };
 
   const handleEditProgress = (job: IJob) => {
@@ -479,37 +398,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     setEditingJob(null);
   };
 
-  const handleUpdateJobProgress = async (jobId: string, updatedJobData: Partial<IJob>): Promise<IJob> => {
-    if (onUpdateJob) {
-      try {
-        const updatedJob = await onUpdateJob(jobId, updatedJobData);
-        console.log('Dashboard: Job progress updated successfully', updatedJob);
-        
-        // Update the editingJob state with the updated job data
-        if (editingJob && editingJob._id === jobId && updatedJob) {
-          setEditingJob(updatedJob);
-        }
-        
-        // Call onJobUpdated if available to ensure UI updates
-        if (onJobUpdated && updatedJob) {
-          onJobUpdated(updatedJob);
-        }
-        
-        return updatedJob;
-      } catch (error) {
-        console.error('Dashboard: Error updating job progress:', error);
-        throw error;
-      }
-    } else {
-      throw new Error('onUpdateJob is not available');
-    }
-  };
-
-  // Job management functions
   const handleEditJob = (jobId: string) => {
     const job = jobs.find(j => j._id === jobId);
     if (job) {
-      // Convert IJob to Job interface
       const jobForEdit: Job = {
         customer: job.customer,
         jobName: job.jobName,
@@ -523,9 +414,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const handleUpdateJob = (updatedJob: Job) => {
-    if (editingJobId && onUpdateJob) {
-      // Convert Job interface to Partial<IJob>
+  const handleUpdateJobDetails = (updatedJob: Job) => {
+    if (editingJobId && handleUpdateJob) {
       const jobForUpdate: Partial<IJob> = {
         customer: updatedJob.customer,
         jobName: updatedJob.jobName,
@@ -533,7 +423,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         projectManager: updatedJob.projectManager,
         priority: updatedJob.priority,
       };
-      onUpdateJob(editingJobId, jobForUpdate);
+      handleUpdateJob(editingJobId, jobForUpdate);
       setEditingJobForModal(null);
       setEditingJobId(null);
     }
@@ -542,12 +432,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const handleCancelEdit = () => {
     setEditingJobForModal(null);
     setEditingJobId(null);
-  };
-
-  const handleOpenAddModal = () => {
-    setEditingJobForModal(null);
-    setEditingJobId(null);
-    setIsJobModalOpen(true);
   };
 
   const handleCloseJobModal = () => {
@@ -565,8 +449,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleConfirmDelete = () => {
-    if (deleteConfirm.jobId && onDeleteJob) {
-      onDeleteJob(deleteConfirm.jobId);
+    if (deleteConfirm.jobId && handleDeleteJob) {
+      handleDeleteJob(deleteConfirm.jobId);
     }
     setDeleteConfirm({
       isOpen: false,
@@ -625,28 +509,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           {getJobStatus(job)}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleViewPDFs(job);
-          }}
-          className={`inline-flex items-center px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-            job.documents && job.documents.length > 0
-              ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-              : 'bg-gray-100 text-gray-500 cursor-not-allowed'
-          }`}
-          disabled={!job.documents || job.documents.length === 0}
-        >
-          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-          </svg>
-          {job.documents && job.documents.length > 0 
-            ? `${job.documents.length} PDF${job.documents.length !== 1 ? 's' : ''}`
-            : 'No PDFs'
-          }
-        </button>
-      </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         <div className="flex gap-2 justify-center">
           <button
@@ -674,145 +536,81 @@ export const Dashboard: React.FC<DashboardProps> = ({
     </tr>
   );
 
-  // Separate jobs into active and completed - only show active jobs on dashboard
-  const activeJobsForDisplay = jobs.filter(job => !job.completedDate || job.completedDate === null);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading completed jobs...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const renderJobTable = (jobsToRender: IJob[], title: string, emptyMessage: string) => (
-    <div className="bg-white rounded-lg shadow border overflow-hidden">
-      <div className="px-6 py-4 border-b bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={loadJobs}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        {jobsToRender.length > 0 ? (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Manager</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documents</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortJobsByStatus(jobsToRender).map((job) => renderJobRow(job))}
-            </tbody>
-          </table>
-        ) : (
-          <div className="px-6 py-8 text-center">
-            <div className="text-gray-400 mb-2">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-gray-500">{emptyMessage}</p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Statistics Cards */}
-        <div className="lg:col-span-2">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Job Statistics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalJobs}</p>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Completed Jobs</h1>
+          <p className="text-gray-600 mt-2">View and manage all completed jobs</p>
+        </div>
 
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="bg-white rounded-lg shadow border overflow-hidden">
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <h3 className="text-lg font-semibold text-gray-900">Completed Jobs ({jobs.length})</h3>
+          </div>
+          <div className="overflow-x-auto">
+            {jobs.length > 0 ? (
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Project Manager</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {sortJobsByStatus(jobs).map((job) => renderJobRow(job))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="px-6 py-8 text-center">
+                <div className="text-gray-400 mb-2">
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">{completedJobsCount}</p>
-                </div>
+                <p className="text-gray-500">No completed jobs found.</p>
               </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">In Progress</p>
-                  <p className="text-2xl font-bold text-gray-900">{inProgressJobsCount}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Waiting Submittal</p>
-                  <p className="text-2xl font-bold text-gray-900">{waitingSubmittalJobsCount}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Job Management Section */}
-          <div className="mt-8">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold text-gray-900">Active Jobs</h3>
-              <button
-                onClick={handleOpenAddModal}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-              >
-                + Add New Job
-              </button>
-            </div>
-            
-            {/* Active Jobs Section - only show non-completed jobs */}
-            <div className="mb-8">
-              {renderJobTable(
-                activeJobsForDisplay, 
-                `Active Jobs (${activeJobsForDisplay.length})`, 
-                "No active jobs found. Add a new job to get started!"
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>
-
-      <PDFModal 
-        isOpen={isPDFModalOpen}
-        onClose={handleClosePDFModal}
-        job={selectedJob}
-      />
 
       <ProgressEditModal
         isOpen={isProgressModalOpen}
         onClose={handleCloseProgressModal}
         job={editingJob}
-        onUpdateJob={handleUpdateJobProgress}
+        onUpdateJob={handleUpdateJob}
       />
 
       <JobModal
@@ -821,13 +619,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
         isEditing={!!editingJobForModal}
         editingJob={editingJobForModal}
         editingJobId={editingJobId}
-        onAddJob={onAddJob || (async () => ({}) as IJob)}
-        onUpdateJob={handleUpdateJob}
+        onAddJob={async () => ({} as IJob)}
+        onUpdateJob={handleUpdateJobDetails}
         onCancelEdit={handleCancelEdit}
-        projectManagers={projectManagers}
-        onAddProjectManager={onAddProjectManager || (() => {})}
-        onDeleteProjectManager={onDeleteProjectManager || (() => {})}
-        onJobUpdated={onJobUpdated}
+        projectManagers={[]}
+        onAddProjectManager={() => {}}
+        onDeleteProjectManager={() => {}}
+        onJobUpdated={() => {}}
       />
 
       <ConfirmDialog
@@ -841,4 +639,4 @@ export const Dashboard: React.FC<DashboardProps> = ({
       />
     </div>
   );
-};
+} 

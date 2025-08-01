@@ -7,6 +7,7 @@ export interface IJob {
   jobNumber: string;
   projectManager?: string;
   startDate?: Date | null;
+  waitingSubmittalDate?: Date | null;
   finishedDate?: Date | null;
   completedDate?: Date | null;
   priority: 'High' | 'Medium' | 'Low';
@@ -45,6 +46,10 @@ const JobSchema = new mongoose.Schema<IJob>({
   startDate: {
     type: Date,
     required: false, // Allow null for pending jobs
+  },
+  waitingSubmittalDate: {
+    type: Date,
+    required: false,
   },
   finishedDate: {
     type: Date,

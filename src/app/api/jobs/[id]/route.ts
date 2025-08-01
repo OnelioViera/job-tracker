@@ -104,6 +104,13 @@ export async function PUT(
         body.startDate = null;
       }
     }
+    if (body.waitingSubmittalDate !== undefined) {
+      if (body.waitingSubmittalDate && typeof body.waitingSubmittalDate === 'string') {
+        body.waitingSubmittalDate = new Date(body.waitingSubmittalDate);
+      } else if (body.waitingSubmittalDate === null || body.waitingSubmittalDate === undefined) {
+        body.waitingSubmittalDate = null;
+      }
+    }
     if (body.finishedDate !== undefined) {
       if (body.finishedDate && typeof body.finishedDate === 'string') {
         body.finishedDate = new Date(body.finishedDate);
